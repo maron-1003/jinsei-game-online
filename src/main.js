@@ -329,30 +329,48 @@ async function loadRoom() {
   }
 }
 
+
 function subscribeRoom() {
-  if (channel) supabase.removeChannel(channel);
+  if (channel) {
+    supabase.removeChannel(channel);
+  }
 
   channel = supabase.channel(`room-${room.code}`)
-  .on("postgres_changes", {
-    event: "*",
-    schema: "public",
-    table: "game_rooms",
-    filter: `code=eq.${room.code}`
-  }, async payload => {
-    if (!payload.new) return;
 
-    room = payload.new;
+    // ゲーム状態の変更を監視
+    .on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "game_rooms",
+      filter: `code=eq.${room.code}`
+    }, payload => {
+      if (!payload.new) return;
 
-    if (room.game_state?.players?.length) {
-      game = room.game_state;
-      syncPendingEvent();
-      screen = "game";
-    }
+      room = payload.new;
 
-    render();
-  })
+      if (room.game_state?.players?.length) {
+        game = room.game_state;
+        syncPendingEvent();
+        screen = "game";
+      }
+
+      render();
+    })
+
+    // プレイヤーの参加・準備状態の変更を監視
+    .on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "game_players",
+      filter: `room_code=eq.${room.code}`
+    }, async () => {
+      await loadRoom();
+      render();
+    })
+
     .subscribe();
 }
+
 
 function renderLobby() {
   const isHost = room?.host_id === clientId;
