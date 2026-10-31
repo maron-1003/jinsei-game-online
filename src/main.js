@@ -33,6 +33,9 @@ let seenEventIds = new Set();
 let animatedEventIds = new Set();
 let lobbySyncTimer = null;
 let lobbySyncBusy = false;
+let displayPositions = {};
+let animatedMoveIds = new Set();
+let landingPlayerId = null;
 
 // 表彰式の状態
 let ceremonyGameKey = null;
@@ -46,6 +49,56 @@ function syncPendingEvent() {
 
   seenEventIds.add(event.id);
   visibleEvent = event;
+}
+
+function syncMoveAnimation() {
+  const move = game?.moveAnimation;
+
+  if (!move?.id || animatedMoveIds.has(move.id)) return;
+
+  animatedMoveIds.add(move.id);
+
+  const player = game.players.find(p => p.id === move.playerId);
+  if (!player) return;
+
+  // 移動前の位置からアニメーション開始
+  displayPositions[move.playerId] = move.from;
+  renderGame();
+
+  const direction = move.to >= move.from ? 1 : -1;
+  const distance = Math.abs(move.to - move.from);
+
+  let step = 0;
+
+  const moveNext = () => {
+    step++;
+
+    displayPositions[move.playerId] =
+      move.from + direction * Math.min(step, distance);
+
+    if (step >= distance) {
+      landingPlayerId = move.playerId;
+      renderGame();
+
+      setTimeout(() => {
+        delete displayPositions[move.playerId];
+        landingPlayerId = null;
+        renderGame();
+      }, 450);
+
+      return;
+    }
+
+    renderGame();
+    setTimeout(moveNext, 300);
+  };
+
+  if (distance === 0) {
+    delete displayPositions[move.playerId];
+    return;
+  }
+
+  setTimeout(moveNext, 300);
 }
 
 const escapeHtml = (s = "") =>
@@ -323,8 +376,9 @@ async function loadRoom() {
 
   // playing / finished のどちらでもゲーム状態を読み込む
   if (room.game_state?.players?.length) {
-    game = room.game_state;
-    syncPendingEvent();
+  game = room.game_state;
+  syncMoveAnimation();
+  syncPendingEvent();
     screen = "game";
   }
 }
@@ -617,7 +671,9 @@ const revealCount = Number(game.revealCount || 0);
   // 10列のジグザグ型ボード配置
   const tiles = Array.from({ length: BOARD_SIZE + 1 }, (_, i) => {
     const space = getSpace(i);
-    const occupants = game.players.filter(p => p.position === i);
+    const occupants = game.players.filter(p =>
+      (displayPositions[p.id] ?? p.position) === i
+    );
 
     const row = Math.floor(i / 10);
     const col = row % 2 === 0 ? i % 10 : 9 - (i % 10);
@@ -644,7 +700,10 @@ const revealCount = Number(game.revealCount || 0);
               <span
                 title="${escapeHtml(p.name)}"
                 style="background:${p.color}"
-                class="${p.id === clientId ? "my-pawn" : ""}"
+                class="${[
+                  p.id === clientId ? "my-pawn" : "",
+                  landingPlayerId === p.id ? "pawn-landed" : ""
+                ].filter(Boolean).join(" ")}"
               >${p.avatar}</span>
             `).join("")}
           </div>
@@ -766,7 +825,13 @@ const revealCount = Number(game.revealCount || 0);
 
     ${visibleEvent && !dismissedEventIds.has(visibleEvent.id) ? `
       <div class="modal-backdrop">
-        <div class="event-modal ${animateEvent ? "" : "event-no-animation"}">
+        <div class="event-modal ${
+          visibleEvent.kind === "good"
+            ? "event-good"
+            : visibleEvent.kind === "bad"
+              ? "event-bad"
+              : "event-neutral"
+        } ${animateEvent ? "" : "event-no-animation"}">
           <div class="event-emoji">
             ${visibleEvent.kind === "good" ? "🎉" : visibleEvent.kind === "bad" ? "💸" : "🌴"}
           </div>
@@ -976,11 +1041,16 @@ async function rollDice() {
 
     await saveGame(resultGame);
 
-    // 保存に失敗した場合は中断
-    if (game !== resultGame) return;
-
     // 出目を確認する時間を2.5秒確保
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const moveDistance = Math.abs(
+      (resultGame.moveAnimation?.to ?? 0) -
+      (resultGame.moveAnimation?.from ?? 0)
+    );
+
+    // 1マス300ms + 移動終了後1.5秒
+    await new Promise(resolve =>
+      setTimeout(resolve, moveDistance * 300 + 1500)
+    );
 
     // イベントを表示
     if (pendingEvent) {
@@ -1094,9 +1164,13 @@ async function saveGame(next) {
     })
     .eq("code", room.code);
 
-  if (error) return showError(error.message);
+  if (error) {
+    showError(error.message);
+    throw error;
+  }
 
   game = next;
+  syncMoveAnimation();
   syncPendingEvent();
   render();
 }

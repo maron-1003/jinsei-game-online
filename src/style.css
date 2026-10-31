@@ -1665,3 +1665,127 @@ footer span { letter-spacing: 1px; }
   margin-top: 13px;
   line-height: 1.7;
 }
+/* =========================
+   コマの着地アニメーション
+========================= */
+
+.pawns span {
+  transition: transform 0.15s ease;
+}
+
+.pawns span.pawn-landed {
+  animation: pawn-bounce 0.45s ease;
+  z-index: 20;
+}
+
+@keyframes pawn-bounce {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(-18px) scale(1.15);
+  }
+  55% {
+    transform: translateY(0) scale(0.9, 1.1);
+  }
+  75% {
+    transform: translateY(-5px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* =========================
+   イベント専用演出
+========================= */
+
+.event-modal {
+  position: relative;
+  overflow: hidden;
+}
+
+.event-modal.event-good {
+  animation: event-good-in 0.6s ease-out;
+  border: 3px solid #ffd65a;
+  box-shadow:
+    0 0 20px rgba(255, 214, 90, 0.7),
+    0 0 55px rgba(255, 170, 50, 0.35);
+}
+
+.event-modal.event-bad {
+  animation: event-bad-in 0.55s ease-out;
+  border: 3px solid #ff7777;
+  box-shadow: 0 0 35px rgba(255, 70, 70, 0.5);
+}
+
+.event-modal.event-neutral {
+  animation: event-good-in 0.6s ease-out;
+  border: 3px solid #75cfff;
+}
+
+.event-modal.event-good .event-emoji {
+  animation: event-emoji-pop 0.7s ease-out;
+}
+
+.event-modal.event-bad .event-emoji {
+  animation: event-emoji-shake 0.6s ease-in-out;
+}
+
+@keyframes event-good-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) rotate(-5deg);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.08) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes event-bad-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  35% {
+    opacity: 1;
+    transform: translateX(-9px) scale(1.03);
+  }
+  55% {
+    transform: translateX(9px) scale(1.03);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes event-emoji-pop {
+  0% {
+    transform: scale(0) rotate(-30deg);
+  }
+  70% {
+    transform: scale(1.3) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes event-emoji-shake {
+  0%, 100% {
+    transform: rotate(0);
+  }
+  20%, 60% {
+    transform: rotate(-15deg);
+  }
+  40%, 80% {
+    transform: rotate(15deg);
+  }
+}

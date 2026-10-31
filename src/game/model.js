@@ -100,6 +100,15 @@ export function takeTurn(game, playerId) {
   player.position = Math.min(BOARD_SIZE, oldPosition + roll);
   next.lastRoll = roll;
 
+  // コマ移動アニメーション用の情報
+  next.moveAnimation = {
+    id: crypto.randomUUID(),
+    playerId: player.id,
+    from: oldPosition,
+    to: player.position,
+    roll
+  };
+
   let message = `${player.name} は ${roll} マス進んだ！`;
 
   // ゴール判定
