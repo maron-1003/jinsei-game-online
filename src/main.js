@@ -36,8 +36,6 @@ let lobbySyncBusy = false;
 
 // 表彰式の状態
 let ceremonyGameKey = null;
-let revealCount = 0;
-let ceremonyStarted = false;
 let ceremonyTimer = null;
 
 function syncPendingEvent() {
@@ -525,14 +523,12 @@ async function startGame() {
 
   const initial = createInitialGame(players);
 
+  initial.ceremonyStarted = false;
+  initial.revealCount = 0;
   visibleEvent = null;
   dismissedEventIds.clear();
   seenEventIds.clear();
   animatedEventIds.clear();
-
-  ceremonyGameKey = null;
-  revealCount = 0;
-  ceremonyStarted = false;
 
   if (ceremonyTimer) {
     clearTimeout(ceremonyTimer);
@@ -558,7 +554,7 @@ async function startGame() {
 function renderGame() {
   if (!game) return renderLobby();
 
-  // ゲーム終了時の表彰式タイマーを初期化
+  // ゲーム終了時の表彰式タイマー
   if (game.status === "finished") {
     const key = String(
       game.finishedAt ?? game.finishOrder?.join("|") ?? "finished"
@@ -566,23 +562,26 @@ function renderGame() {
 
     if (ceremonyGameKey !== key) {
       ceremonyGameKey = key;
-      revealCount = 0;
-      ceremonyStarted = false;
 
       if (ceremonyTimer) {
         clearTimeout(ceremonyTimer);
+        ceremonyTimer = null;
       }
 
-      const finishTime = game.finishedAt || Date.now();
-      const remaining = Math.max(0, finishTime + 5000 - Date.now());
+      if (!game.ceremonyStarted) {
+        const finishTime = game.finishedAt || Date.now();
+        const remaining = Math.max(0, finishTime + 5000 - Date.now());
 
-      ceremonyTimer = setTimeout(() => {
-        ceremonyStarted = true;
-        ceremonyTimer = null;
-        render();
-      }, remaining);
+        ceremonyTimer = setTimeout(() => {
+          ceremonyTimer = null;
+          updateCeremony({ ceremonyStarted: true });
+        }, remaining);
+      }
     }
   }
+
+const ceremonyStarted = Boolean(game.ceremonyStarted);
+const revealCount = Number(game.revealCount || 0);
 
   const current = game.players[game.turnIndex];
   const mineTurn = current?.id === clientId;
@@ -883,12 +882,7 @@ function renderGame() {
   document.querySelector("#event-close")?.addEventListener("click", dismissEvent);
 
   document.querySelector("#reveal-next")?.addEventListener("click", () => {
-    if (revealCount < ranked.length) {
-      revealCount++;
-      render();
-    } else {
-      leaveRoom();
-    }
+    advanceCeremony();
   });
 
   document.querySelector("#ceremony-ok")?.addEventListener("click", () => {
@@ -897,8 +891,7 @@ function renderGame() {
       ceremonyTimer = null;
     }
 
-    ceremonyStarted = true;
-    render();
+    updateCeremony({ ceremonyStarted: true });
   });
 }
 
@@ -944,6 +937,69 @@ async function dismissEvent() {
   }
 }
 
+// 表彰式の状態を全員で同期する
+async function updateCeremony(patch) {
+  if (busy) return;
+
+  busy = true;
+
+  try {
+    // 最新のゲーム状態を取得
+    const { data, error: readError } = await supabase
+      .from("game_rooms")
+      .select("game_state")
+      .eq("code", room.code)
+      .single();
+
+    if (readError) throw readError;
+
+    const latestGame = data.game_state;
+
+    const next = {
+      ...latestGame,
+      ...patch
+    };
+
+    const { error } = await supabase
+      .from("game_rooms")
+      .update({ game_state: next })
+      .eq("code", room.code);
+
+    if (error) throw error;
+
+    game = next;
+    render();
+
+  } catch (error) {
+    showError(error.message);
+  } finally {
+    busy = false;
+  }
+}
+
+// 次の順位を全員で発表する
+async function advanceCeremony() {
+  const { data, error } = await supabase
+    .from("game_rooms")
+    .select("game_state")
+    .eq("code", room.code)
+    .single();
+
+  if (error) return showError(error.message);
+
+  const latestGame = data.game_state;
+  const currentCount = Number(latestGame.revealCount || 0);
+  const total = ranking(latestGame.players).length;
+
+  if (currentCount < total) {
+    await updateCeremony({
+      revealCount: currentCount + 1
+    });
+  } else {
+    leaveRoom();
+  }
+}
+f
 async function saveGame(next) {
   const { error } = await supabase
     .from("game_rooms")
@@ -965,7 +1021,7 @@ async function leaveRoom() {
   clearInterval(lobbySyncTimer);
   lobbySyncTimer = null;
   }
-  
+
   if (channel) {
     await supabase.removeChannel(channel);
     channel = null;
@@ -991,8 +1047,6 @@ async function leaveRoom() {
   screen = "home";
 
   ceremonyGameKey = null;
-  revealCount = 0;
-  ceremonyStarted = false;
 
   visibleEvent = null;
   dismissedEventIds.clear();
