@@ -726,6 +726,10 @@ const revealCount = Number(game.revealCount || 0);
             🎲 サイコロを振る！
           </button>
 
+          <div class="last-message">
+            ${escapeHtml(game.lastMessage || "次はどんな人生が待っているかな？")}
+          </div>
+          
         </div>
 
         <div class="panel stats-panel">
@@ -922,50 +926,45 @@ const revealCount = Number(game.revealCount || 0);
 }
 
 async function rollDice() {
-  if (
-    !game ||
-    game.players[game.turnIndex]?.id !== clientId ||
-    game.pendingEvent ||
-    game.diceRolling ||
-    busy
-  ) return;
+  if (busy || !mineTurn || game.pendingEvent || game.status !== "playing") return;
 
   busy = true;
 
   try {
-    // 全端末にサイコロ演出開始を通知
-    const rollingGame = {
-      ...game,
-      diceRolling: true,
-      diceRollStartedAt: Date.now()
-    };
+    // サイコロを振るアニメーション
+    game = { ...game, diceRolling: true };
+    renderGame();
 
-    const { error } = await supabase
-      .from("game_rooms")
-      .update({ game_state: rollingGame })
-      .eq("code", room.code);
-
-    if (error) throw error;
-
-    game = rollingGame;
-    render();
-
-    // サイコロの回転を待つ
     await new Promise(resolve => setTimeout(resolve, 1100));
 
-    // 演出終了後に出目を確定
-    const next = takeTurn({
-      ...game,
+    // ターン処理
+    const nextGame = takeTurn(
+      { ...game, diceRolling: false },
+      clientId
+    );
+
+    // イベントを一時的に保留
+    const pendingEvent = nextGame.pendingEvent;
+
+    // イベント以外の結果を先に表示
+    const resultGame = {
+      ...nextGame,
+      pendingEvent: null,
       diceRolling: false
-    }, clientId);
+    };
 
-    next.diceRolling = false;
-    next.diceRollStartedAt = null;
+    await saveGame(resultGame);
 
-    await saveGame(next);
+    // 出目を確認できる時間を2秒確保
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-  } catch (error) {
-    showError(error.message);
+    // その後イベントを表示
+    if (pendingEvent) {
+      await saveGame({
+        ...resultGame,
+        pendingEvent
+      });
+    }
   } finally {
     busy = false;
   }

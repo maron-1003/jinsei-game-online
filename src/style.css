@@ -1656,3 +1656,12 @@ footer span { letter-spacing: 1px; }
   font-size: 25px;
   box-shadow: 0 4px 0 #3f50c4;
 }
+.last-message {
+  font-size: 12px;
+  color: #71809a;
+  background: #f0f2fa;
+  border-radius: 11px;
+  padding: 12px;
+  margin-top: 13px;
+  line-height: 1.7;
+}
