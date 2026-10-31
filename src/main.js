@@ -493,14 +493,14 @@ function renderLobby() {
         <span class="muted-label">ROOM CODE</span>
         <div class="room-code">
           ${room.code}
-          <button id="copy-code" class="icon-btn" title="コードをコピー">
-            📋
+          <button id="copy-code" class="btn secondary">
+            コードをコピー
           </button>
-          <button id="share-room" class="icon-btn" title="招待URLをコピー">
-            🔗
+          <button id="share-room" class="btn primary">
+            URLをコピー
           </button>
         </div>
-        <p class="subtle">📋 コードをコピー　🔗 招待URLをコピー</p>
+        <p class="subtle">友達にURLを送ると、招待したルームに参加できます。</p>
 
         <div class="player-list">
           ${players.map((p, i) => `
@@ -1271,7 +1271,7 @@ const inviteCode = new URLSearchParams(
 
 // 正しい6桁のコードなら自動参加処理へ
 if (inviteCode && /^[A-Z0-9]{6}$/i.test(inviteCode)) {
-  const normalizedCode = inviteCode.toUpperCase();
+  const normalizedCode =finviteCode.toUpperCase();
 
   const joinInput = document.querySelector("#join-code");
 
