@@ -429,7 +429,7 @@ function subscribeRoom() {
       if (room.game_state?.players?.length) {
         game = room.game_state;
         syncMoveAnimation();
-        syncPendingEvent();f
+        syncPendingEvent();
         screen = "game";
       }
 
@@ -493,9 +493,14 @@ function renderLobby() {
         <span class="muted-label">ROOM CODE</span>
         <div class="room-code">
           ${room.code}
-          <button id="copy-code" class="icon-btn" title="コピー">▢</button>
+          <button id="copy-code" class="icon-btn" title="コードをコピー">
+            📋
+          </button>
+          <button id="share-room" class="icon-btn" title="招待URLをコピー">
+            🔗
+          </button>
         </div>
-        <p class="subtle">このコードを友達に共有してください。</p>
+        <p class="subtle">📋 コードをコピー　🔗 招待URLをコピー</p>
 
         <div class="player-list">
           ${players.map((p, i) => `
@@ -549,8 +554,29 @@ function renderLobby() {
     </section>
   `);
 
-  document.querySelector("#copy-code").onclick = () =>
-    navigator.clipboard?.writeText(room.code);
+  // 招待コードをコピー
+  document.querySelector("#copy-code").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(room.code);
+      alert("招待コードをコピーしました！");
+    } catch (error) {
+      showError("コピーに失敗しました。");
+    }
+  };
+
+  // 招待URLをコピー
+  document.querySelector("#share-room").onclick = async () => {
+    try {
+      const inviteUrl = new URL(window.location.href);
+      inviteUrl.searchParams.set("room", room.code);
+
+      await navigator.clipboard.writeText(inviteUrl.toString());
+
+      alert("招待URLをコピーしました！");
+    } catch (error) {
+      showError("招待URLのコピーに失敗しました。");
+    }
+  };
 
   document.querySelector("#ready-btn").onclick = toggleReady;
   document.querySelector("#start-btn")?.addEventListener("click", startGame);
@@ -1237,3 +1263,21 @@ function showError(message) {
 }
 
 render();
+
+// 招待URLからルームコードを取得
+const inviteCode = new URLSearchParams(
+  window.location.search
+).get("room");
+
+// 正しい6桁のコードなら自動参加処理へ
+if (inviteCode && /^[A-Z0-9]{6}$/i.test(inviteCode)) {
+  const normalizedCode = inviteCode.toUpperCase();
+
+  const joinInput = document.querySelector("#join-code");
+
+  if (joinInput) {
+    joinInput.value = normalizedCode;
+  }
+
+  joinRoom(normalizedCode);
+}
