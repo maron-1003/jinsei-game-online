@@ -49,6 +49,9 @@ function syncPendingEvent() {
 
   seenEventIds.add(event.id);
   visibleEvent = event;
+
+  // 新しいイベントの演出を再生可能にする
+  animatedEventIds.delete(event.id);
 }
 
 function syncMoveAnimation() {
@@ -383,10 +386,13 @@ async function loadRoom() {
 
   // playing / finished のどちらでもゲーム状態を読み込む
   if (room.game_state?.players?.length) {
-  game = room.game_state;
-  syncMoveAnimation();
-  syncPendingEvent();
+    game = room.game_state;
     screen = "game";
+
+    syncMoveAnimation();
+    syncPendingEvent();
+
+    render();
   }
 }
 
@@ -423,7 +429,7 @@ function subscribeRoom() {
       if (room.game_state?.players?.length) {
         game = room.game_state;
         syncMoveAnimation();
-        syncPendingEvent();
+        syncPendingEvent();f
         screen = "game";
       }
 
