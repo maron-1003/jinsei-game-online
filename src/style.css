@@ -1573,3 +1573,86 @@ footer span { letter-spacing: 1px; }
     transform: rotateX(702deg) rotateY(695deg) translateY(0);
   }
 }
+/* =================================
+   DICE RESULT VISIBILITY
+================================= */
+
+/* サイコロを大きく */
+.dice-cube-wrapper {
+  width: 130px;
+  height: 130px;
+}
+
+.dice-cube {
+  width: 100px;
+  height: 100px;
+  transform: rotateX(-35deg) rotateY(-25deg);
+}
+
+/* 各面のサイズ */
+.dice-cube-face {
+  width: 100px;
+  height: 100px;
+  padding: 12px;
+  border-radius: 15px;
+}
+
+/* ドットを大きく */
+.dice-cube-face span {
+  width: 14px;
+  height: 14px;
+}
+
+.dice-cube-face .pip {
+  background: radial-gradient(circle at 35% 30%, #444, #050505 75%);
+}
+
+/* 立方体の面の位置 */
+.face-front {
+  transform: translateZ(50px);
+}
+
+.face-back {
+  transform: rotateY(180deg) translateZ(50px);
+}
+
+.face-right {
+  transform: rotateY(90deg) translateZ(50px);
+}
+
+.face-left {
+  transform: rotateY(-90deg) translateZ(50px);
+}
+
+.face-top {
+  transform: rotateX(90deg) translateZ(50px);
+}
+
+.face-bottom {
+  transform: rotateX(-90deg) translateZ(50px);
+}
+
+/* 出目表示 */
+.dice-result {
+  min-height: 45px;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #5969bd;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.dice-result strong {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #7185ff, #5365e9);
+  color: white;
+  font-size: 25px;
+  box-shadow: 0 4px 0 #3f50c4;
+}

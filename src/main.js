@@ -713,20 +713,19 @@ const revealCount = Number(game.revealCount || 0);
             </div>
           </div>
 
-          <p>
-            ${mineTurn
-              ? "あなたの番だよ！サイコロを振ろう！"
-              : `${escapeHtml(current?.name || "")} の番です。`}
-          </p>
+          <div class="dice-result">
+            ${game.diceRolling
+              ? "ROLLING..."
+              : game.lastRoll
+                ? `出目 <strong>${game.lastRoll}</strong>`
+                : "サイコロを振ろう！"}
+          </div>
 
           <button class="btn primary full" id="roll-btn"
-            ${!mineTurn || game.pendingEvent || game.diceRolling || game.status !== "playing" ? "disabled" : ""}
+            ${!mineTurn || game.pendingEvent || game.diceRolling || game.status !== "playing" ? "disabled" : ""}>
             🎲 サイコロを振る！
           </button>
 
-          <div class="last-message">
-            ${escapeHtml(game.lastMessage || "次はどんな人生が待っているかな？")}
-          </div>
         </div>
 
         <div class="panel stats-panel">
