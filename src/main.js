@@ -981,7 +981,7 @@ async function rollDice() {
     if (game !== resultGame) return;
 
     // 出目を確認する時間を2.5秒確保
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     // イベントを表示
     if (pendingEvent) {
