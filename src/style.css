@@ -1452,3 +1452,124 @@ footer span { letter-spacing: 1px; }
     transform: translateY(0) rotateX(810deg) rotateY(720deg) rotateZ(360deg);
   }
 }
+/* =================================
+   REALISTIC 3D DICE
+================================= */
+
+.dice-stage {
+  display: grid;
+  place-items: center;
+  padding: 35px 0 45px;
+  perspective: 700px;
+  overflow: visible;
+}
+
+.dice-cube-wrapper {
+  width: 90px;
+  height: 90px;
+  display: grid;
+  place-items: center;
+  perspective: 700px;
+}
+
+.dice-cube {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  transform-style: preserve-3d;
+  transform: rotateX(-18deg) rotateY(-25deg);
+  transition: transform .4s ease;
+}
+
+.dice-cube-face {
+  position: absolute;
+  inset: 0;
+  width: 76px;
+  height: 76px;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  place-items: center;
+
+  padding: 10px;
+  border-radius: 13px;
+  border: 2px solid #dedede;
+
+  background: linear-gradient(145deg, #ffffff, #e9e9e9);
+
+  box-shadow:
+    inset 0 2px 5px #ffffff,
+    inset 0 -3px 6px #00000012;
+}
+
+.dice-cube-face span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dice-cube-face .pip {
+  background: radial-gradient(circle at 35% 30%, #555, #080808 75%);
+  box-shadow:
+    inset 0 1px 2px #000,
+    0 1px 1px #ffffff;
+}
+
+/* 6面の配置 */
+
+.face-front {
+  transform: translateZ(38px);
+}
+
+.face-back {
+  transform: rotateY(180deg) translateZ(38px);
+}
+
+.face-right {
+  transform: rotateY(90deg) translateZ(38px);
+}
+
+.face-left {
+  transform: rotateY(-90deg) translateZ(38px);
+}
+
+.face-top {
+  transform: rotateX(90deg) translateZ(38px);
+}
+
+.face-bottom {
+  transform: rotateX(-90deg) translateZ(38px);
+}
+
+/* 回転アニメーション */
+
+.dice-cube.dice-rolling {
+  animation: realistic-dice-roll 1.1s cubic-bezier(.2,.7,.25,1) both;
+}
+
+@keyframes realistic-dice-roll {
+  0% {
+    transform: rotateX(-18deg) rotateY(-25deg) translateY(0);
+  }
+
+  20% {
+    transform: rotateX(160deg) rotateY(180deg) translateY(-35px);
+  }
+
+  40% {
+    transform: rotateX(390deg) rotateY(360deg) translateY(5px);
+  }
+
+  60% {
+    transform: rotateX(590deg) rotateY(540deg) translateY(-25px);
+  }
+
+  80% {
+    transform: rotateX(740deg) rotateY(700deg) translateY(5px);
+  }
+
+  100% {
+    transform: rotateX(702deg) rotateY(695deg) translateY(0);
+  }
+}

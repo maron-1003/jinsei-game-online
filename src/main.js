@@ -550,6 +550,25 @@ async function startGame() {
   screen = "game";
   render();
 }
+// 3Dサイコロのドットを生成
+function createDiceFace(value, className) {
+  const patterns = {
+    1: [5],
+    2: [1, 9],
+    3: [1, 5, 9],
+    4: [1, 3, 7, 9],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 4, 6, 7, 9]
+  };
+
+  return `
+    <div class="dice-cube-face ${className}">
+      ${Array.from({ length: 9 }, (_, i) => `
+        <span class="${patterns[value].includes(i + 1) ? "pip" : ""}"></span>
+      `).join("")}
+    </div>
+  `;
+}
 
 function renderGame() {
   if (!game) return renderLobby();
@@ -681,12 +700,16 @@ const revealCount = Number(game.revealCount || 0);
       <aside class="game-sidebar">
         <div class="panel dice-panel">
           <span class="muted-label">🎲 YOUR TURN</span>
-
           <div class="dice-stage">
-            <div class="dice-face ${game.diceRolling ? "dice-rolling" : ""}">
-              ${game.diceRolling
-                ? "🎲"
-                : (["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][game.lastRoll] || "🎲")}
+            <div class="dice-cube-wrapper">
+              <div class="dice-cube ${game.diceRolling ? "dice-rolling" : ""}">
+                ${createDiceFace(game.lastRoll || 1, "face-top")}
+                ${createDiceFace(2, "face-front")}
+                ${createDiceFace(3, "face-right")}
+                ${createDiceFace(4, "face-back")}
+                ${createDiceFace(5, "face-left")}
+                ${createDiceFace(6, "face-bottom")}
+              </div>
             </div>
           </div>
 
