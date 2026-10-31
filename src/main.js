@@ -429,8 +429,13 @@ async function rollDice() {
 }
 
 async function dismissEvent() {
-  if (!game?.pendingEvent || game.pendingEvent.playerId !== clientId) return showError("イベントを発生させたプレイヤーが閉じてください。");
+  if (!game?.pendingEvent || busy) return;
+
+  busy = true;
+
   await saveGame(closeEvent(game));
+
+  busy = false;
 }
 
 async function saveGame(next) {
