@@ -19,6 +19,9 @@ let busy = false;
 let visibleEvent = null;
 let dismissedEventIds = new Set();
 let seenEventIds = new Set();
+// 表彰式の表示状態
+let ceremonyGameKey = null;
+let revealCount = 0;
 
 function syncPendingEvent() {
   const event = game?.pendingEvent;
@@ -253,6 +256,8 @@ async function startGame() {
   visibleEvent = null;
   dismissedEventIds.clear();
   seenEventIds.clear();
+  ceremonyGameKey = null;
+  revealCount = 0;
   const { error } = await supabase.from("game_rooms").update({ status: "playing", game_state: initial }).eq("code", room.code);
   if (error) return showError(error.message);
   game = initial;
@@ -263,6 +268,18 @@ async function startGame() {
 
 
 function renderGame() {
+  
+    // ゲーム終了時に表彰式を初期化
+  if (game.status === "finished") {
+    const key = String(
+      game.finishedAt ?? game.finishOrder?.join("|") ?? "finished"
+    );
+
+    if (ceremonyGameKey !== key) {
+      ceremonyGameKey = key;
+      revealCount = 0;
+    }
+  }
   if (!game) return renderLobby();
 
   const current = game.players[game.turnIndex];
@@ -423,15 +440,86 @@ function renderGame() {
     ` : ""}
 
     ${game.status === "finished" ? `
-      <div class="modal-backdrop">
-        <div class="event-modal">
-          <div class="event-emoji">🏆</div>
-          <span class="eyebrow">GAME FINISHED</span>
-          <h2>人生の結果発表！</h2>
-          ${ranked.map((p, i) => `
-            <p>${i + 1}位 ${p.avatar} ${escapeHtml(p.name)}：${yen(p.money - p.debt)}</p>
-          `).join("")}
-          <button class="btn primary full" id="back-home">トップへ</button>
+      <div class="modal-backdrop ceremony-backdrop">
+        <div class="ceremony-modal">
+
+          <span class="eyebrow">LIFE JOURNEY AWARDS</span>
+
+          <h2 class="ceremony-title">
+            🏆 人生の結果発表！
+          </h2>
+
+          <p class="ceremony-subtitle">
+            最後まで歩んだ人生。その結果は……？
+          </p>
+
+          <div class="ceremony-progress">
+            ${revealCount} / ${ranked.length} 人 発表済み
+          </div>
+
+          <div class="ceremony-results">
+            ${[...ranked].reverse().slice(0, revealCount).map((p) => {
+              const position = ranked.indexOf(p);
+              const isWinner = position === 0;
+
+              return `
+                <div class="ceremony-player ${isWinner ? "ceremony-winner" : ""}">
+                  <div class="ceremony-rank">
+                    ${["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣"][position]}
+                  </div>
+
+                  <div class="ceremony-avatar" style="background:${p.color}33">
+                    ${p.avatar}
+                  </div>
+
+                  <div class="ceremony-player-info">
+                    <strong>
+                      ${escapeHtml(p.name)}
+                      ${isWinner ? '<span class="winner-label">CHAMPION</span>' : ""}
+                    </strong>
+
+                    <small>
+                      ${escapeHtml(p.job || "職業なし")}
+                      ・ ${p.finishRank ? `${p.finishRank}番目にゴール` : "ゴール"}
+                    </small>
+
+                    <div class="ceremony-assets">
+                      🏠 ${escapeHtml(p.house || "なし")}
+                      🚗 ${escapeHtml(p.car || "なし")}
+                    </div>
+                  </div>
+
+                  <div class="ceremony-money">
+                    <strong>${yen(p.money || 0)}</strong>
+                    <small>借金 ${yen(p.debt || 0)}</small>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+
+          ${revealCount >= ranked.length ? `
+            <div class="champion-celebration">
+              <div class="champion-trophy">🏆</div>
+              <span>THE CHAMPION</span>
+              <h2>${escapeHtml(ranked[0]?.name || "")}</h2>
+              <p>今回の人生ゲームの優勝者！</p>
+              <div class="confetti">🎉 ✨ 🎊 ✨ 🎉</div>
+            </div>
+          ` : `
+            <div class="ceremony-waiting">
+              次に発表されるのは……？
+            </div>
+          `}
+
+          <button class="btn primary full" id="reveal-next">
+            ${revealCount >= ranked.length
+              ? "トップへ戻る"
+              : revealCount === 0
+                ? "結果発表スタート！"
+                : "次の順位を発表 →"}
+          </button>
+
         </div>
       </div>
     ` : ""}
@@ -440,6 +528,14 @@ function renderGame() {
   document.querySelector("#roll-btn").onclick = rollDice;
   document.querySelector("#event-close")?.addEventListener("click", dismissEvent);
   document.querySelector("#back-home")?.addEventListener("click", leaveRoom);
+    document.querySelector("#reveal-next")?.addEventListener("click", () => {
+    if (revealCount < ranked.length) {
+      revealCount++;
+      render();
+    } else {
+      leaveRoom();
+    }
+  });
 }
 
 async function rollDice() {

@@ -1166,3 +1166,238 @@ footer span { letter-spacing: 1px; }
   .board-heading strong { font-size: 16px; }
   .board-legend { gap: 9px; font-size: 9px; }
 }
+
+/* ================================
+   LIFE JOURNEY AWARDS
+================================ */
+
+.ceremony-backdrop {
+  z-index: 100;
+  overflow-y: auto;
+  padding: 24px 12px;
+  background: rgba(8, 13, 35, 0.88);
+  backdrop-filter: blur(12px);
+}
+
+.ceremony-modal {
+  width: min(620px, 100%);
+  max-height: none;
+  overflow: hidden;
+  margin: auto;
+  padding: 30px;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 0%, #fff4bd 0%, transparent 42%),
+    linear-gradient(145deg, #ffffff, #eaf0ff);
+  color: #202b50;
+  text-align: center;
+  box-shadow: 0 25px 100px rgba(0,0,0,.4);
+  animation: ceremony-appear .65s cubic-bezier(.2,.8,.2,1);
+}
+
+.ceremony-title {
+  margin: 12px 0 5px;
+  font-size: clamp(25px, 5vw, 36px);
+  font-weight: 900;
+}
+
+.ceremony-subtitle {
+  color: #69738e;
+  font-size: 13px;
+}
+
+.ceremony-progress {
+  display: inline-block;
+  margin: 14px 0;
+  padding: 7px 16px;
+  border-radius: 30px;
+  background: #e1e8ff;
+  color: #5264bb;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ceremony-results {
+  display: grid;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.ceremony-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid #dfe5f2;
+  border-radius: 16px;
+  background: white;
+  text-align: left;
+  animation: ceremony-appear .5s ease both;
+}
+
+.ceremony-winner {
+  border: 2px solid #f3c64d;
+  background: linear-gradient(110deg, #fff9dc, #ffffff);
+  box-shadow: 0 5px 20px rgba(230, 177, 42, .16);
+}
+
+.ceremony-rank {
+  min-width: 30px;
+  font-size: 24px;
+  text-align: center;
+}
+
+.ceremony-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 26px;
+}
+
+.ceremony-player-info {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+
+.ceremony-player-info strong {
+  color: #273252;
+  font-size: 14px;
+}
+
+.ceremony-player-info small,
+.ceremony-money small {
+  color: #7d879e;
+  font-size: 10px;
+}
+
+.ceremony-assets {
+  color: #68748e;
+  font-size: 11px;
+}
+
+.ceremony-money {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+.ceremony-money strong {
+  color: #263c8c;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.winner-label {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: #f4cb59;
+  color: #59420b;
+  font-size: 9px;
+}
+
+.ceremony-waiting {
+  margin: 20px 0;
+  padding: 17px;
+  border-radius: 15px;
+  background: #e8edff;
+  color: #5264bb;
+  font-weight: 800;
+}
+
+.champion-celebration {
+  margin: 20px 0;
+  padding: 24px 12px;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #fff0a9, #ffda67, #fff5cb);
+  animation: champion-appear .8s cubic-bezier(.2,.8,.2,1);
+}
+
+.champion-trophy {
+  font-size: 65px;
+  animation: trophy-float 2s ease-in-out infinite;
+}
+
+.champion-celebration > span {
+  color: #9b7111;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 3px;
+}
+
+.champion-celebration h2 {
+  margin: 8px 0;
+  color: #62460b;
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.champion-celebration p {
+  color: #87651a;
+  font-size: 13px;
+}
+
+.confetti {
+  margin-top: 14px;
+  font-size: 25px;
+  letter-spacing: 8px;
+}
+
+@keyframes ceremony-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes champion-appear {
+  from {
+    opacity: 0;
+    transform: scale(.75);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes trophy-float {
+  0%, 100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(4deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .ceremony-modal {
+    padding: 20px 12px;
+  }
+
+  .ceremony-player {
+    gap: 6px;
+    padding: 9px 6px;
+  }
+
+  .ceremony-money strong {
+    font-size: 11px;
+  }
+
+  .ceremony-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 21px;
+  }
+}
