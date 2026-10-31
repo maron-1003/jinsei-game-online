@@ -926,11 +926,15 @@ const revealCount = Number(game.revealCount || 0);
 }
 
 async function rollDice() {
-  const current = players.find(p => p.id === clientId);
-  const currentTurn = game.turnOrder?.[game.turnIndex];
-  const isMyTurn = currentTurn === clientId;
+  const current = game?.players?.[game.turnIndex];
+  const isMyTurn = current?.id === clientId;
 
-  if (busy || !isMyTurn || game.pendingEvent || game.status !== "playing") return;
+  if (
+    busy ||
+    !isMyTurn ||
+    game.pendingEvent ||
+    game.status !== "playing"
+  ) return;
 
   busy = true;
 
@@ -947,10 +951,10 @@ async function rollDice() {
       clientId
     );
 
-    // イベントを一時的に分離
+    // イベントを一時的に保留
     const pendingEvent = nextGame.pendingEvent;
 
-    // まず出目と移動結果だけ保存
+    // 出目と移動結果を先に表示
     const resultGame = {
       ...nextGame,
       pendingEvent: null,
@@ -959,10 +963,10 @@ async function rollDice() {
 
     await saveGame(resultGame);
 
-    // 保存に失敗していたらイベント処理に進まない
+    // 保存に失敗した場合は中断
     if (game !== resultGame) return;
 
-    // 出目を見せる時間
+    // 出目を確認する時間を2.5秒確保
     await new Promise(resolve => setTimeout(resolve, 2500));
 
     // イベントを表示
