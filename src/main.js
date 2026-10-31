@@ -683,7 +683,11 @@ const revealCount = Number(game.revealCount || 0);
           <span class="muted-label">🎲 YOUR TURN</span>
 
           <div class="dice-stage">
-            <div class="dice-face">${game.lastRoll || "🎲"}</div>
+            <div class="dice-face ${game.diceRolling ? "dice-rolling" : ""}">
+              ${game.diceRolling
+                ? "🎲"
+                : (["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][game.lastRoll] || "🎲")}
+            </div>
           </div>
 
           <p>
@@ -693,7 +697,7 @@ const revealCount = Number(game.revealCount || 0);
           </p>
 
           <button class="btn primary full" id="roll-btn"
-            ${!mineTurn || game.pendingEvent || game.status !== "playing" ? "disabled" : ""}>
+            ${!mineTurn || game.pendingEvent || game.diceRolling || game.status !== "playing" ? "disabled" : ""}
             🎲 サイコロを振る！
           </button>
 
@@ -900,14 +904,46 @@ async function rollDice() {
     !game ||
     game.players[game.turnIndex]?.id !== clientId ||
     game.pendingEvent ||
+    game.diceRolling ||
     busy
   ) return;
 
   busy = true;
 
   try {
-    const next = takeTurn(game, clientId);
+    // 全端末にサイコロ演出開始を通知
+    const rollingGame = {
+      ...game,
+      diceRolling: true,
+      diceRollStartedAt: Date.now()
+    };
+
+    const { error } = await supabase
+      .from("game_rooms")
+      .update({ game_state: rollingGame })
+      .eq("code", room.code);
+
+    if (error) throw error;
+
+    game = rollingGame;
+    render();
+
+    // サイコロの回転を待つ
+    await new Promise(resolve => setTimeout(resolve, 1100));
+
+    // 演出終了後に出目を確定
+    const next = takeTurn({
+      ...game,
+      diceRolling: false
+    }, clientId);
+
+    next.diceRolling = false;
+    next.diceRollStartedAt = null;
+
     await saveGame(next);
+
+  } catch (error) {
+    showError(error.message);
   } finally {
     busy = false;
   }
