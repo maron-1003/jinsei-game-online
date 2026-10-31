@@ -333,29 +333,24 @@ function subscribeRoom() {
   if (channel) supabase.removeChannel(channel);
 
   channel = supabase.channel(`room-${room.code}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "game_rooms",
-        filter: `code=eq.${room.code}`
-      },
-      async payload => {
-        if (!payload.new) return;
+  .on("postgres_changes", {
+    event: "*",
+    schema: "public",
+    table: "game_rooms",
+    filter: `code=eq.${room.code}`
+  }, async payload => {
+    if (!payload.new) return;
 
-        room = payload.new;
+    room = payload.new;
 
-        // finished も含めて全員の画面に同期する
-        if (room.game_state?.players?.length) {
-          game = room.game_state;
-          syncPendingEvent();
-          screen = "game";
-        }
+    if (room.game_state?.players?.length) {
+      game = room.game_state;
+      syncPendingEvent();
+      screen = "game";
+    }
 
-        render();
-      }
-    )
+    render();
+  })
     .subscribe();
 }
 
