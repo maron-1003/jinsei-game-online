@@ -422,6 +422,7 @@ function subscribeRoom() {
 
       if (room.game_state?.players?.length) {
         game = room.game_state;
+        syncMoveAnimation();
         syncPendingEvent();
         screen = "game";
       }
