@@ -926,7 +926,11 @@ const revealCount = Number(game.revealCount || 0);
 }
 
 async function rollDice() {
-  if (busy || !mineTurn || game.pendingEvent || game.status !== "playing") return;
+  const current = players.find(p => p.id === clientId);
+  const currentTurn = game.turnOrder?.[game.turnIndex];
+  const isMyTurn = currentTurn === clientId;
+
+  if (busy || !isMyTurn || game.pendingEvent || game.status !== "playing") return;
 
   busy = true;
 
