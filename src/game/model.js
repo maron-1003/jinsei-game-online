@@ -52,7 +52,11 @@ export function takeTurn(game, playerId) {
     } else if (space === 2 || space === 4 || space === 7 || space === 11) {
       const event = randomEvent();
       player.money += event.money;
-      next.pendingEvent = { ...event, playerId: player.id };
+      next.pendingEvent = {
+        ...event,
+        playerId: player.id,
+        id: crypto.randomUUID()
+      };
       message += ` ${event.title}`;
     } else {
       message += " ひと休み。";

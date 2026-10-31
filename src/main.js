@@ -16,6 +16,20 @@ let screen = "home";
 let selectedAvatar = AVATARS[0];
 let selectedColor = COLORS[0];
 let busy = false;
+let visibleEvent = null;
+let dismissedEventId = null;
+let lastSeenEventId = null;
+
+function syncPendingEvent() {
+  const event = game?.pendingEvent;
+  if (!event) return;
+
+  if (event.id && event.id !== lastSeenEventId) {
+    visibleEvent = event;
+    dismissedEventId = null;
+    lastSeenEventId = event.id;
+  }
+}
 
 const escapeHtml = (s = "") => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 const code = () => Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -192,6 +206,7 @@ async function loadRoom() {
   if (mine) myPlayer = mine;
   if (room.status === "playing" && room.game_state?.players) {
     game = room.game_state;
+    syncPendingEvent();
     screen = "game";
   }
 }
@@ -202,7 +217,7 @@ function subscribeRoom() {
     .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms", filter: `code=eq.${room.code}` }, async payload => {
       room = payload.new;
       if (room.status === "playing" && room.game_state?.players) {
-        game = room.game_state; screen = "game";
+        game = room.game_state; syncPendingEvent(); screen = "game";
       }
       render();
     })
@@ -237,7 +252,10 @@ async function startGame() {
   const initial = createInitialGame(players);
   const { error } = await supabase.from("game_rooms").update({ status: "playing", game_state: initial }).eq("code", room.code);
   if (error) return showError(error.message);
-  game = initial; screen = "game"; render();
+  game = initial;
+  syncPendingEvent();
+  screen = "game";
+  render();
 }
 
 
@@ -383,19 +401,20 @@ function renderGame() {
       </aside>
     </section>
 
-    ${game.pendingEvent ? `
+    ${visibleEvent && dismissedEventId !== visibleEvent.id ? `
       <div class="modal-backdrop">
         <div class="event-modal">
           <div class="event-emoji">
-            ${game.pendingEvent.kind === "good" ? "🎉" : game.pendingEvent.kind === "bad" ? "💸" : "🌴"}
+            ${visibleEvent.kind === "good" ? "🎉" : visibleEvent.kind === "bad" ? "💸" : "🌴"}
           </div>
           <span class="eyebrow">LIFE EVENT</span>
-          <h2>${escapeHtml(game.pendingEvent.title)}</h2>
-          <p>${escapeHtml(game.pendingEvent.description)}</p>
-          <strong class="${game.pendingEvent.money >= 0 ? "positive" : "negative"}">
-            ${game.pendingEvent.money >= 0 ? "+" : ""}${yen(game.pendingEvent.money)}
+          <h2>${escapeHtml(game.players.find(p => p.id === visibleEvent.playerId)?.name || "プレイヤー")}さんにイベント発生！</h2>
+          <h3>${escapeHtml(visibleEvent.title)}</h3>
+          <p>${escapeHtml(visibleEvent.description)}</p>
+          <strong class="${visibleEvent.money >= 0 ? "positive" : "negative"}">
+            ${visibleEvent.money >= 0 ? "+" : ""}${yen(visibleEvent.money)}
           </strong>
-          <button class="btn primary full" id="event-close">OK！</button>
+          <button class="btn primary full" id="event-close">閉じる</button>
         </div>
       </div>
     ` : ""}
@@ -429,13 +448,25 @@ async function rollDice() {
 }
 
 async function dismissEvent() {
-  if (!game?.pendingEvent || busy) return;
+  const event = visibleEvent;
 
-  busy = true;
+  if (!event || dismissedEventId === event.id) return;
 
-  await saveGame(closeEvent(game));
+  // まず自分の画面だけイベントを閉じる
+  dismissedEventId = event.id;
 
-  busy = false;
+  // イベントを受けた本人だけ、全体のイベントを終了して次のターンへ
+  if (
+    event.playerId === clientId &&
+    game?.pendingEvent?.id === event.id &&
+    !busy
+  ) {
+    busy = true;
+    await saveGame(closeEvent(game));
+    busy = false;
+  } else {
+    render();
+  }
 }
 
 async function saveGame(next) {
