@@ -926,16 +926,30 @@ const revealCount = Number(game.revealCount || 0);
 }
 
 async function rollDice() {
-  const current = game?.players?.[game.turnIndex];
+async function rollDice() {
+  console.log("🎲 サイコロボタン押された");
+  console.log("busy:", busy);
+  console.log("game:", game);
+  console.log("turnIndex:", game?.turnIndex);
+  console.log("current player:", game?.players?.[game?.turnIndex]);
+  console.log("clientId:", clientId);
+
+  const current = game?.players?.[game?.turnIndex];
   const isMyTurn = current?.id === clientId;
+
+  console.log("自分のターン:", isMyTurn);
 
   if (
     busy ||
     !isMyTurn ||
     game.pendingEvent ||
     game.status !== "playing"
-  ) return;
+  ) {
+    console.log("サイコロ処理が中断されました");
+    return;
+  }
 
+  // この下は今のrollDice()の残りの処理をそのまま残す
   busy = true;
 
   try {
