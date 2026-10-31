@@ -240,25 +240,181 @@ async function startGame() {
   game = initial; screen = "game"; render();
 }
 
+
 function renderGame() {
   if (!game) return renderLobby();
+
   const current = game.players[game.turnIndex];
   const mineTurn = current?.id === clientId;
   const ranked = ranking(game.players);
-  const tiles = Array.from({length:BOARD_SIZE+1},(_,i)=>{
+
+  // 10列のジグザグ型ボード配置
+  const tiles = Array.from({ length: BOARD_SIZE + 1 }, (_, i) => {
     const space = getSpace(i);
     const occupants = game.players.filter(p => p.position === i);
-    return `<div class="tile tile-${space.type} ${i===BOARD_SIZE?"goal-tile":""}"><span class="tile-num">${i===0?"":i}</span><span class="tile-icon">${space.icon}</span><small>${space.label}</small>${occupants.length?`<div class="pawns">${occupants.map(p=>`<span title="${escapeHtml(p.name)}" style="background:${p.color}">${p.avatar}</span>`).join("")}</div>`:""}</div>`;
+
+    const row = Math.floor(i / 10);
+    const col = row % 2 === 0 ? i % 10 : 9 - (i % 10);
+
+    const tileClass = [
+      "tile",
+      `tile-${space.type}`,
+      i === 0 ? "start-tile" : "",
+      i === BOARD_SIZE ? "goal-tile" : "",
+      occupants.some(p => p.id === clientId) ? "my-tile" : ""
+    ].filter(Boolean).join(" ");
+
+    return `
+      <div class="${tileClass}" style="grid-column:${col + 1};grid-row:${row + 1}">
+        <span class="tile-num">${i}</span>
+        ${i === 0 ? '<span class="tile-special">START</span>' : ""}
+        ${i === BOARD_SIZE ? '<span class="tile-special">GOAL</span>' : ""}
+        <span class="tile-icon">${space.icon}</span>
+        <small>${escapeHtml(space.label)}</small>
+        ${occupants.length ? `
+          <div class="pawns">
+            ${occupants.map(p => `
+              <span
+                title="${escapeHtml(p.name)}"
+                style="background:${p.color}"
+                class="${p.id === clientId ? "my-pawn" : ""}"
+              >${p.avatar}</span>
+            `).join("")}
+          </div>
+        ` : ""}
+      </div>
+    `;
   }).join("");
+
   shell(`
-    <section class="game-top"><div><span class="eyebrow">LIFE JOURNEY / YEAR ${game.turnNumber}</span><h1>あなたの人生を進めよう。</h1></div><div class="turn-indicator"><span class="turn-dot" style="background:${current?.color}"></span><div><small>NOW PLAYING</small><strong>${escapeHtml(current?.name || "-")}</strong></div></div></section>
-    <section class="game-layout">
-      <div class="board-panel"><div class="board-heading"><strong>人生マップ</strong><span>FINISH : 60 DAYS</span></div><div class="board-grid">${tiles}</div><div class="board-legend"><span>🟡 給料</span><span>🟣 イベント</span><span>🟢 買い物</span><span>🔵 投資</span></div></div>
-      <aside class="game-sidebar"><div class="panel dice-panel"><span class="muted-label">YOUR TURN</span><div class="dice-face">${game.lastRoll || "🎲"}</div><p>${mineTurn?"あなたの番です。サイコロを振ろう！":`${escapeHtml(current?.name || "")} の番です。`}</p><button class="btn primary full" id="roll-btn" ${!mineTurn||game.pendingEvent||game.status!=="playing"?"disabled":""}>サイコロを振る</button><div class="last-message">${escapeHtml(game.lastMessage || "")}</div></div><div class="panel stats-panel"><div class="panel-title">PLAYER STATUS <span>全${game.players.length}人</span></div>${game.players.map(p=>`<div class="stat-player ${p.id===current?.id?"active-player":""}"><span class="stat-avatar">${p.avatar}</span><div class="stat-main"><strong>${escapeHtml(p.name)}</strong><small>${p.job} ・ ${p.position}/${BOARD_SIZE}マス</small></div><b>${yen(p.money)}</b></div>`).join("")}</div><div class="panel mini-rank"><div class="panel-title">資産ランキング</div>${ranked.map((p,i)=>`<div class="rank-line"><b>${["🥇","🥈","🥉","4","5","6"][i]}</b><span>${escapeHtml(p.name)}</span><strong>${yen(p.money-p.debt)}</strong></div>`).join("")}</div></aside>
+    <section class="game-top">
+      <div>
+        <span class="eyebrow">🌈 YOUR LIFE ADVENTURE</span>
+        <h1>人生の冒険を楽しもう！</h1>
+        <div class="game-subtitle">みんなで最高の人生を作ろう。</div>
+      </div>
+
+      <div class="turn-indicator">
+        <span class="turn-dot" style="background:${current?.color}"></span>
+        <div>
+          <small>🎮 NOW PLAYING</small>
+          <strong>${escapeHtml(current?.name || "-")}</strong>
+        </div>
+      </div>
     </section>
-    ${game.pendingEvent?`<div class="modal-backdrop"><div class="event-modal"><div class="event-emoji">${game.pendingEvent.kind==="good"?"🎉":game.pendingEvent.kind==="bad"?"💸":"🌴"}</div><span class="eyebrow">LIFE EVENT</span><h2>${escapeHtml(game.pendingEvent.title)}</h2><p>${escapeHtml(game.pendingEvent.description)}</p><strong class="${game.pendingEvent.money>=0?"positive":"negative"}">${game.pendingEvent.money>=0?"+":""}${yen(game.pendingEvent.money)}</strong><button class="btn primary full" id="event-close">OK！</button></div></div>`:""}
-    ${game.status==="finished"?`<div class="modal-backdrop"><div class="event-modal"><div class="event-emoji">🏆</div><span class="eyebrow">GAME FINISHED</span><h2>人生の結果発表！</h2>${ranked.map((p,i)=>`<p>${i+1}位 ${p.avatar} ${escapeHtml(p.name)}：${yen(p.money-p.debt)}</p>`).join("")}<button class="btn primary full" id="back-home">トップへ</button></div></div>`:""}
+
+    <section class="game-layout">
+      <div class="board-panel">
+        <div class="board-heading">
+          <div>
+            <span class="board-kicker">LIFE ADVENTURE MAP</span>
+            <strong>🏝️ 人生ワールド</strong>
+          </div>
+          <span class="board-progress">🏁 GOAL : ${BOARD_SIZE}</span>
+        </div>
+
+        <div class="board-world">
+          <div class="world-decoration decoration-one">☁️</div>
+          <div class="world-decoration decoration-two">🌳</div>
+          <div class="world-decoration decoration-three">☀️</div>
+          <div class="world-decoration decoration-four">🌲</div>
+
+          <div class="board-grid">
+            ${tiles}
+          </div>
+        </div>
+
+        <div class="board-legend">
+          <span>💰 給料</span>
+          <span>🎉 イベント</span>
+          <span>🛍️ 買い物</span>
+          <span>📈 投資</span>
+          <span>🌴 休憩</span>
+        </div>
+      </div>
+
+      <aside class="game-sidebar">
+        <div class="panel dice-panel">
+          <span class="muted-label">🎲 YOUR TURN</span>
+          <div class="dice-stage">
+            <div class="dice-face">${game.lastRoll || "🎲"}</div>
+          </div>
+          <p>${mineTurn
+            ? "あなたの番だよ！サイコロを振ろう！"
+            : `${escapeHtml(current?.name || "")} の番です。`
+          }</p>
+          <button class="btn primary full" id="roll-btn"
+            ${!mineTurn || game.pendingEvent || game.status !== "playing" ? "disabled" : ""}>
+            🎲 サイコロを振る！
+          </button>
+          <div class="last-message">
+            ${escapeHtml(game.lastMessage || "次はどんな人生が待っているかな？")}
+          </div>
+        </div>
+
+        <div class="panel stats-panel">
+          <div class="panel-title">
+            <span>👥 PLAYER STATUS</span>
+            <span>全${game.players.length}人</span>
+          </div>
+
+          ${game.players.map(p => `
+            <div class="stat-player ${p.id === current?.id ? "active-player" : ""}">
+              <span class="stat-avatar" style="background:${p.color}22">${p.avatar}</span>
+              <div class="stat-main">
+                <strong>${escapeHtml(p.name)}</strong>
+                <small>${escapeHtml(p.job || "冒険中")} ・ ${p.position}/${BOARD_SIZE}マス</small>
+              </div>
+              <b>${yen(p.money)}</b>
+            </div>
+          `).join("")}
+        </div>
+
+        <div class="panel mini-rank">
+          <div class="panel-title">🏆 資産ランキング</div>
+          ${ranked.map((p, i) => `
+            <div class="rank-line">
+              <b>${["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣"][i]}</b>
+              <span>${escapeHtml(p.name)}</span>
+              <strong>${yen(p.money - p.debt)}</strong>
+            </div>
+          `).join("")}
+        </div>
+      </aside>
+    </section>
+
+    ${game.pendingEvent ? `
+      <div class="modal-backdrop">
+        <div class="event-modal">
+          <div class="event-emoji">
+            ${game.pendingEvent.kind === "good" ? "🎉" : game.pendingEvent.kind === "bad" ? "💸" : "🌴"}
+          </div>
+          <span class="eyebrow">LIFE EVENT</span>
+          <h2>${escapeHtml(game.pendingEvent.title)}</h2>
+          <p>${escapeHtml(game.pendingEvent.description)}</p>
+          <strong class="${game.pendingEvent.money >= 0 ? "positive" : "negative"}">
+            ${game.pendingEvent.money >= 0 ? "+" : ""}${yen(game.pendingEvent.money)}
+          </strong>
+          <button class="btn primary full" id="event-close">OK！</button>
+        </div>
+      </div>
+    ` : ""}
+
+    ${game.status === "finished" ? `
+      <div class="modal-backdrop">
+        <div class="event-modal">
+          <div class="event-emoji">🏆</div>
+          <span class="eyebrow">GAME FINISHED</span>
+          <h2>人生の結果発表！</h2>
+          ${ranked.map((p, i) => `
+            <p>${i + 1}位 ${p.avatar} ${escapeHtml(p.name)}：${yen(p.money - p.debt)}</p>
+          `).join("")}
+          <button class="btn primary full" id="back-home">トップへ</button>
+        </div>
+      </div>
+    ` : ""}
   `);
+
   document.querySelector("#roll-btn").onclick = rollDice;
   document.querySelector("#event-close")?.addEventListener("click", dismissEvent);
   document.querySelector("#back-home")?.addEventListener("click", leaveRoom);

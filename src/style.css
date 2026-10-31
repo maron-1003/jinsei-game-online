@@ -785,3 +785,384 @@ footer span { letter-spacing: 1px; }
 
   footer { font-size: 9px; }
 }
+
+
+/* =================================
+   2.5D LIFE ADVENTURE WORLD
+================================= */
+
+.game-top {
+  padding: 35px 0 25px;
+}
+
+.game-top h1 {
+  font-size: clamp(25px, 3vw, 36px);
+  font-weight: 950;
+  letter-spacing: -1.5px;
+  color: #27335e;
+}
+
+.game-subtitle {
+  font-size: 12px;
+  color: #929bb3;
+  font-weight: 600;
+}
+
+.game-layout {
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 22px;
+}
+
+/* BOARD OUTER */
+
+.board-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 22px;
+  border: 3px solid white;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #bcebdc, #a7dcca 55%, #c9efdb);
+  box-shadow:
+    0 8px 0 #83c4ae,
+    0 18px 35px #466f7130;
+}
+
+.board-heading {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 20px;
+}
+
+.board-heading strong {
+  display: block;
+  font-size: 19px;
+  color: #315d55;
+  margin-top: 5px;
+}
+
+.board-kicker {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #5b9986;
+}
+
+.board-progress {
+  background: white;
+  padding: 9px 13px;
+  border-radius: 30px;
+  color: #5b9986 !important;
+  font-weight: 900;
+  box-shadow: 0 4px 0 #b3d8cb;
+}
+
+/* WORLD */
+
+.board-world {
+  position: relative;
+  overflow: hidden;
+  padding: 22px;
+  border-radius: 23px;
+  background:
+    radial-gradient(ellipse at 20% 20%, #d9f5c8 0 8%, transparent 9%),
+    radial-gradient(ellipse at 80% 70%, #d2f0c2 0 10%, transparent 11%),
+    linear-gradient(145deg, #a6d9ae, #c2e8b8);
+  border: 2px solid #ffffffa8;
+  box-shadow: inset 0 3px 15px #477c4d22;
+}
+
+.world-decoration {
+  position: absolute;
+  z-index: 0;
+  font-size: 34px;
+  opacity: .8;
+  filter: drop-shadow(0 5px 3px #476b4830);
+  pointer-events: none;
+}
+
+.decoration-one { top: 8px; left: 12%; }
+.decoration-two { bottom: 12px; right: 3%; font-size: 43px; }
+.decoration-three { top: 8px; right: 8%; font-size: 38px; }
+.decoration-four { bottom: 10px; left: 2%; font-size: 38px; }
+
+/* SNAKE BOARD */
+
+.board-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-rows: repeat(7, minmax(88px, auto));
+  grid-auto-flow: row;
+  gap: 13px;
+  padding: 9px;
+  background: transparent;
+}
+
+/* 3D TILE */
+
+.tile {
+  position: relative;
+  min-width: 0;
+  min-height: 88px;
+  overflow: visible;
+  border: 2px solid #ffffff;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #ffffff, #edf1ff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  box-shadow:
+    0 5px 0 #c4cce4,
+    0 8px 12px #425b7130;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.tile:hover {
+  transform: translateY(-5px) scale(1.035);
+  box-shadow:
+    0 9px 0 #c4cce4,
+    0 13px 17px #425b7135;
+  z-index: 3;
+}
+
+.tile-num {
+  top: 5px;
+  left: 7px;
+  font-size: 9px;
+  font-weight: 950;
+  color: #8d98b2;
+}
+
+.tile-icon {
+  font-size: clamp(18px, 2vw, 27px);
+  filter: drop-shadow(0 3px 2px #293a5528);
+  line-height: 1.1;
+}
+
+.tile small {
+  font-size: 8px;
+  font-weight: 900;
+  color: #68748e;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* TILE COLORS */
+
+.tile-salary {
+  background: linear-gradient(145deg, #fff5c9, #ffd978);
+  box-shadow: 0 5px 0 #e5b84f, 0 8px 12px #a87c2930;
+}
+
+.tile-event {
+  background: linear-gradient(145deg, #f4ddff, #dcbaff);
+  box-shadow: 0 5px 0 #b98add, 0 8px 12px #8054a530;
+}
+
+.tile-shopping {
+  background: linear-gradient(145deg, #d8ffe9, #8ce9b9);
+  box-shadow: 0 5px 0 #59c58c, 0 8px 12px #398e6430;
+}
+
+.tile-investment {
+  background: linear-gradient(145deg, #d9f0ff, #8fd1ff);
+  box-shadow: 0 5px 0 #5da9df, 0 8px 12px #3978a530;
+}
+
+.tile-rest {
+  background: linear-gradient(145deg, #ffffff, #e4eaf0);
+  box-shadow: 0 5px 0 #b9c4d0, 0 8px 12px #52627420;
+}
+
+.start-tile {
+  background: linear-gradient(145deg, #fff4a8, #ffc95c);
+  box-shadow: 0 5px 0 #e7a93d, 0 8px 15px #9c742b35;
+}
+
+.goal-tile {
+  background: linear-gradient(145deg, #ffdf9a, #ff9b9b);
+  border: 2px solid white;
+  box-shadow: 0 5px 0 #e47a7a, 0 8px 15px #a64f4f35;
+}
+
+.tile-special {
+  font-size: 7px;
+  font-weight: 1000;
+  letter-spacing: .7px;
+  color: #8c5b2b;
+  background: #ffffffb8;
+  border-radius: 20px;
+  padding: 3px 6px;
+}
+
+/* PLAYER PAWNS */
+
+.pawns {
+  bottom: -9px;
+  display: flex;
+  gap: 1px;
+  justify-content: center;
+  z-index: 4;
+}
+
+.pawns span {
+  width: 23px;
+  height: 23px;
+  border: 2px solid white;
+  border-radius: 50%;
+  font-size: 12px;
+  box-shadow: 0 3px 5px #26365b55;
+}
+
+.pawns .my-pawn {
+  outline: 3px solid #ffffff;
+  box-shadow: 0 0 0 5px #687cff, 0 4px 8px #26365b55;
+  z-index: 2;
+}
+
+.my-tile {
+  outline: 3px solid #687cff;
+  outline-offset: 2px;
+}
+
+/* LEGEND */
+
+.board-legend {
+  position: relative;
+  z-index: 2;
+  padding-top: 20px;
+  color: #477b69;
+  font-weight: 900;
+  gap: 15px;
+}
+
+/* DICE */
+
+.dice-panel {
+  background: linear-gradient(145deg, #fff, #f0edff);
+  border: 2px solid white;
+  box-shadow: 0 7px 0 #d7d3f3, 0 12px 25px #6658a522 !important;
+}
+
+.dice-stage {
+  display: grid;
+  place-items: center;
+  padding: 12px 0;
+  perspective: 500px;
+}
+
+.dice-face {
+  width: 100px;
+  height: 100px;
+  border-radius: 23px;
+  background: linear-gradient(145deg, #ffffff, #e5e8ff);
+  border: 3px solid white;
+  color: #6475ed;
+  font-size: 52px;
+  box-shadow:
+    0 8px 0 #c4c9ef,
+    0 13px 20px #5b65ae30;
+  animation: dice-float 3s ease-in-out infinite;
+}
+
+@keyframes dice-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-5px) rotate(3deg); }
+}
+
+.dice-panel .btn {
+  border-radius: 15px;
+  background: linear-gradient(135deg, #ff9c63, #ff6f91);
+  box-shadow: 0 6px 0 #d95679, 0 9px 17px #d9567935;
+}
+
+.dice-panel .btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #d95679;
+}
+
+/* SIDEBAR */
+
+.game-sidebar .panel {
+  border: 2px solid white;
+  box-shadow: 0 6px 0 #e1e5f0, 0 10px 22px #34405b12;
+}
+
+.stat-player {
+  border-radius: 12px;
+  margin-top: 4px;
+}
+
+.active-player {
+  border: 2px solid #cdd5ff;
+  background: linear-gradient(90deg, #edf0ff, #f8f8ff);
+}
+
+.stat-player > b {
+  color: #5368e9;
+  font-weight: 950;
+}
+
+/* EVENT */
+
+.event-modal {
+  border: 4px solid white;
+  box-shadow: 0 10px 0 #d8dcef, 0 25px 80px #10182f44;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1000px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .game-sidebar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dice-panel { grid-row: span 2; }
+}
+
+@media (max-width: 650px) {
+  .shell { padding: 0 10px; }
+
+  .board-panel {
+    padding: 12px;
+    border-radius: 19px;
+  }
+
+  .board-world {
+    overflow-x: auto;
+    padding: 13px;
+  }
+
+  .board-grid {
+    min-width: 690px;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-template-rows: repeat(7, 72px);
+    gap: 8px;
+  }
+
+  .tile {
+    min-height: 72px;
+    border-radius: 10px;
+  }
+
+  .tile-icon { font-size: 19px; }
+  .tile small { font-size: 7px; }
+
+  .world-decoration { display: none; }
+
+  .game-sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .dice-panel { grid-row: auto; }
+
+  .board-heading strong { font-size: 16px; }
+  .board-legend { gap: 9px; font-size: 9px; }
+}
