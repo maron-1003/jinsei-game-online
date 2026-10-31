@@ -926,7 +926,6 @@ const revealCount = Number(game.revealCount || 0);
 }
 
 async function rollDice() {
-async function rollDice() {
   console.log("🎲 サイコロボタン押された");
   console.log("busy:", busy);
   console.log("game:", game);
