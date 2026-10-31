@@ -1401,3 +1401,7 @@ footer span { letter-spacing: 1px; }
     font-size: 21px;
   }
 }
+/* イベント再表示時はアニメーションを繰り返さない */
+.event-modal.event-no-animation {
+  animation: none !important;
+}
