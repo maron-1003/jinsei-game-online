@@ -31,6 +31,8 @@ let visibleEvent = null;
 let dismissedEventIds = new Set();
 let seenEventIds = new Set();
 let animatedEventIds = new Set();
+let lobbySyncTimer = null;
+let lobbySyncBusy = false;
 
 // 表彰式の状態
 let ceremonyGameKey = null;
@@ -330,20 +332,31 @@ async function loadRoom() {
 }
 
 
+
 function subscribeRoom() {
   if (channel) {
     supabase.removeChannel(channel);
+    channel = null;
   }
 
-  channel = supabase.channel(`room-${room.code}`)
+  if (lobbySyncTimer) {
+    clearInterval(lobbySyncTimer);
+    lobbySyncTimer = null;
+  }
 
-    // ゲーム状態の変更を監視
+  const roomCode = room.code;
+
+  channel = supabase.channel(`room-${roomCode}`)
+
+    // ゲーム状態の変更
     .on("postgres_changes", {
       event: "*",
       schema: "public",
       table: "game_rooms",
-      filter: `code=eq.${room.code}`
+      filter: `code=eq.${roomCode}`
     }, payload => {
+      console.log("ゲーム変更受信:", payload);
+
       if (!payload.new) return;
 
       room = payload.new;
@@ -357,19 +370,46 @@ function subscribeRoom() {
       render();
     })
 
-    // プレイヤーの参加・準備状態の変更を監視
+    // プレイヤーの参加・準備状態の変更
     .on("postgres_changes", {
       event: "*",
       schema: "public",
       table: "game_players",
-      filter: `room_code=eq.${room.code}`
-    }, async () => {
-      await loadRoom();
-      render();
+      filter: `room_code=eq.${roomCode}`
+    }, async payload => {
+      console.log("プレイヤー変更受信:", payload);
+
+      if (screen === "lobby") {
+        await loadRoom();
+        render();
+      }
     })
 
-    .subscribe();
+    .subscribe((status, err) => {
+      console.log("Realtime status:", status, err || "");
+
+      if (status === "SUBSCRIBED") {
+        console.log("Realtime接続成功！");
+      }
+    });
+
+  // Realtime通知が届かない場合の予備同期
+  lobbySyncTimer = setInterval(async () => {
+    if (screen !== "lobby" || lobbySyncBusy) return;
+
+    lobbySyncBusy = true;
+
+    try {
+      await loadRoom();
+      render();
+    } catch (error) {
+      console.error("ロビー同期エラー:", error);
+    } finally {
+      lobbySyncBusy = false;
+    }
+  }, 1500);
 }
+
 
 
 function renderLobby() {
@@ -451,17 +491,34 @@ function renderLobby() {
   document.querySelector("#leave-room").onclick = leaveRoom;
 }
 
+
 async function toggleReady() {
+  if (busy) return;
+
   const current = players.find(p => p.id === clientId);
+  if (!current) return;
 
-  const { error } = await supabase
-    .from("game_players")
-    .update({ ready: !current.ready })
-    .eq("id", clientId)
-    .eq("room_code", room.code);
+  busy = true;
 
-  if (error) showError(error.message);
+  try {
+    const { error } = await supabase
+      .from("game_players")
+      .update({ ready: !current.ready })
+      .eq("id", clientId)
+      .eq("room_code", room.code);
+
+    if (error) throw error;
+
+    await loadRoom();
+    render();
+
+  } catch (error) {
+    showError(error.message);
+  } finally {
+    busy = false;
+  }
 }
+
 
 async function startGame() {
   if (room.host_id !== clientId || players.length < 2 || !players.every(p => p.ready)) return;
@@ -904,6 +961,11 @@ async function saveGame(next) {
 }
 
 async function leaveRoom() {
+  if (lobbySyncTimer) {
+  clearInterval(lobbySyncTimer);
+  lobbySyncTimer = null;
+  }
+  
   if (channel) {
     await supabase.removeChannel(channel);
     channel = null;
