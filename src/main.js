@@ -17,18 +17,18 @@ let selectedAvatar = AVATARS[0];
 let selectedColor = COLORS[0];
 let busy = false;
 let visibleEvent = null;
-let dismissedEventId = null;
-let lastSeenEventId = null;
+let dismissedEventIds = new Set();
+let seenEventIds = new Set();
 
 function syncPendingEvent() {
   const event = game?.pendingEvent;
-  if (!event) return;
+  if (!event?.id) return;
 
-  if (event.id && event.id !== lastSeenEventId) {
-    visibleEvent = event;
-    dismissedEventId = null;
-    lastSeenEventId = event.id;
-  }
+  // 一度受信したイベントは再表示しない
+  if (seenEventIds.has(event.id)) return;
+
+  seenEventIds.add(event.id);
+  visibleEvent = event;
 }
 
 const escapeHtml = (s = "") => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
@@ -250,6 +250,9 @@ async function toggleReady() {
 async function startGame() {
   if (room.host_id !== clientId || players.length < 2 || !players.every(p => p.ready)) return;
   const initial = createInitialGame(players);
+  visibleEvent = null;
+  dismissedEventIds.clear();
+  seenEventIds.clear();
   const { error } = await supabase.from("game_rooms").update({ status: "playing", game_state: initial }).eq("code", room.code);
   if (error) return showError(error.message);
   game = initial;
@@ -401,7 +404,7 @@ function renderGame() {
       </aside>
     </section>
 
-    ${visibleEvent && dismissedEventId !== visibleEvent.id ? `
+    ${visibleEvent && !dismissedEventIds.has(visibleEvent.id) ? `
       <div class="modal-backdrop">
         <div class="event-modal">
           <div class="event-emoji">
@@ -450,29 +453,42 @@ async function rollDice() {
 async function dismissEvent() {
   const event = visibleEvent;
 
-  if (!event || dismissedEventId === event.id) return;
+  if (!event || dismissedEventIds.has(event.id)) return;
 
-  // まず自分の画面だけイベントを閉じる
-  dismissedEventId = event.id;
+  // 自分の画面だけ閉じる
+  dismissedEventIds.add(event.id);
+  render();
 
-  // イベントを受けた本人だけ、全体のイベントを終了して次のターンへ
+  // イベントを受けた本人だけ全体のイベントを終了する
   if (
     event.playerId === clientId &&
     game?.pendingEvent?.id === event.id &&
     !busy
   ) {
     busy = true;
-    await saveGame(closeEvent(game));
-    busy = false;
-  } else {
-    render();
+
+    try {
+      await saveGame(closeEvent(game));
+    } finally {
+      busy = false;
+    }
   }
 }
 
 async function saveGame(next) {
-  const { error } = await supabase.from("game_rooms").update({ game_state: next, status: next.status }).eq("code", room.code);
+  const { error } = await supabase
+    .from("game_rooms")
+    .update({
+      game_state: next,
+      status: next.status
+    })
+    .eq("code", room.code);
+
   if (error) return showError(error.message);
-  game = next; render();
+
+  game = next;
+  syncPendingEvent();
+  render();
 }
 
 async function leaveRoom() {
