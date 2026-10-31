@@ -729,7 +729,7 @@ const revealCount = Number(game.revealCount || 0);
           <div class="last-message">
             ${escapeHtml(game.lastMessage || "次はどんな人生が待っているかな？")}
           </div>
-          
+
         </div>
 
         <div class="panel stats-panel">
@@ -931,22 +931,22 @@ async function rollDice() {
   busy = true;
 
   try {
-    // サイコロを振るアニメーション
+    // サイコロのアニメーション開始
     game = { ...game, diceRolling: true };
     renderGame();
 
     await new Promise(resolve => setTimeout(resolve, 1100));
 
-    // ターン処理
+    // サイコロの結果を計算
     const nextGame = takeTurn(
       { ...game, diceRolling: false },
       clientId
     );
 
-    // イベントを一時的に保留
+    // イベントを一時的に分離
     const pendingEvent = nextGame.pendingEvent;
 
-    // イベント以外の結果を先に表示
+    // まず出目と移動結果だけ保存
     const resultGame = {
       ...nextGame,
       pendingEvent: null,
@@ -955,16 +955,23 @@ async function rollDice() {
 
     await saveGame(resultGame);
 
-    // 出目を確認できる時間を2秒確保
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // 保存に失敗していたらイベント処理に進まない
+    if (game !== resultGame) return;
 
-    // その後イベントを表示
+    // 出目を見せる時間
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    // イベントを表示
     if (pendingEvent) {
       await saveGame({
         ...resultGame,
         pendingEvent
       });
     }
+
+  } catch (error) {
+    console.error("サイコロ処理エラー:", error);
+    showError(error.message);
   } finally {
     busy = false;
   }
