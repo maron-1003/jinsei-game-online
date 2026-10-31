@@ -999,7 +999,7 @@ async function advanceCeremony() {
     leaveRoom();
   }
 }
-f
+
 async function saveGame(next) {
   const { error } = await supabase
     .from("game_rooms")
