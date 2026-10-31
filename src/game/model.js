@@ -106,7 +106,8 @@ export function takeTurn(game, playerId) {
     playerId: player.id,
     from: oldPosition,
     to: player.position,
-    roll
+    roll,
+    startedAt: Date.now()
   };
 
   let message = `${player.name} は ${roll} マス進んだ！`;

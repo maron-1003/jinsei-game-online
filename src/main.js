@@ -58,8 +58,15 @@ function syncMoveAnimation() {
 
   animatedMoveIds.add(move.id);
 
+  // 10秒以上前の移動は再生しない
+  if (!move.startedAt || Date.now() - move.startedAt > 10000) {
+    return;
+  }
+
   const player = game.players.find(p => p.id === move.playerId);
   if (!player) return;
+
+  // この下は今のコードをそのまま残す
 
   // 移動前の位置からアニメーション開始
   displayPositions[move.playerId] = move.from;
@@ -582,7 +589,9 @@ async function startGame() {
   visibleEvent = null;
   dismissedEventIds.clear();
   seenEventIds.clear();
-  animatedEventIds.clear();
+  animatedMoveIds.clear();
+  displayPositions = {};
+  landingPlayerId = null;
 
   if (ceremonyTimer) {
     clearTimeout(ceremonyTimer);
