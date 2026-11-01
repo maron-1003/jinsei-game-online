@@ -870,6 +870,37 @@ function renderGame() {
 
         </div>
 
+        <div class="panel life-panel">
+          <div class="panel-title">
+            <span>🏠 LIFE STATUS</span>
+            <span>${escapeHtml(current?.name || "-")}</span>
+          </div>
+
+          <div class="life-grid">
+            <div class="life-metric">
+              <span>職業</span>
+              <strong>${escapeHtml(current?.job || "未定")}</strong>
+            </div>
+            <div class="life-metric">
+              <span>年収</span>
+              <strong>${yen(current?.salary || 0)}</strong>
+            </div>
+            <div class="life-metric">
+              <span>家</span>
+              <strong>${escapeHtml(current?.house || "なし")}</strong>
+            </div>
+            <div class="life-metric">
+              <span>車</span>
+              <strong>${escapeHtml(current?.car || "なし")}</strong>
+            </div>
+          </div>
+
+          <div class="life-summary">
+            <div><span>家族</span><strong>${Number(current?.family || 0)}人</strong></div>
+            <div><span>総資産</span><strong>${yen((current?.money || 0) - (current?.debt || 0))}</strong></div>
+          </div>
+        </div>
+
         <div class="panel stats-panel">
           <div class="panel-title">
             <span>👥 PLAYER STATUS</span>
@@ -935,12 +966,13 @@ function renderGame() {
             <div class="choice-grid">
               ${visibleEvent.choices.map((choice, index) => `
                 <button class="choice-btn" data-choice-index="${index}">
-                  <span>${escapeHtml(choice.label)}</span>
+                  <span class="choice-title">${escapeHtml(choice.label)}</span>
                   <small>
-                    ${choice.job ? `職業: ${escapeHtml(choice.job)}` : ""}
-                    ${choice.house ? `住居: ${escapeHtml(choice.house)}` : ""}
-                    ${choice.car ? `車: ${escapeHtml(choice.car)}` : ""}
-                    ${typeof choice.money === "number" && choice.money !== 0 ? `${choice.money >= 0 ? "+" : ""}${yen(choice.money)}` : ""}
+                    ${choice.job ? `<b>職業:</b> ${escapeHtml(choice.job)}${choice.salary ? ` / ${yen(choice.salary)}` : ""}` : ""}
+                    ${choice.house ? `<b>住居:</b> ${escapeHtml(choice.house)}` : ""}
+                    ${choice.car ? `<b>車:</b> ${escapeHtml(choice.car)}` : ""}
+                    ${choice.family ? `<b>家族:</b> ${Number(choice.family)}人` : ""}
+                    ${typeof choice.money === "number" && choice.money !== 0 ? `<b>変動:</b> ${choice.money >= 0 ? "+" : ""}${yen(choice.money)}` : ""}
                   </small>
                 </button>
               `).join("")}
