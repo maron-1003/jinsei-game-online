@@ -33,12 +33,25 @@ export function newPlayer(id, name, avatar = "🧑", color = COLORS[0]) {
   };
 }
 
+
 export function createInitialGame(players) {
+  // プレイヤーの順番をランダムにシャッフル
+  const shuffledPlayers = [...players];
+
+  for (let i = shuffledPlayers.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [shuffledPlayers[i], shuffledPlayers[j]] =
+      [shuffledPlayers[j], shuffledPlayers[i]];
+  }
+
   return {
     status: "playing",
     turnIndex: 0,
     turnNumber: 1,
-    players: players.map(p => ({
+
+    // ランダムに決まった順番を保存
+    players: shuffledPlayers.map(p => ({
       ...p,
       position: 0,
       money: 3000000,
@@ -51,13 +64,15 @@ export function createInitialGame(players) {
       finished: false,
       finishRank: null
     })),
+
     finishOrder: [],
     finishedAt: null,
     lastRoll: null,
-    lastMessage: "人生のスタート！最初のプレイヤーからサイコロを振ろう。",
+    lastMessage: "🎲 サイコロを振る順番がランダムに決定！最初のプレイヤーからスタート！",
     pendingEvent: null
   };
 }
+
 
 // プレイヤーの純資産を計算
 export function netWorth(player) {
