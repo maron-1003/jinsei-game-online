@@ -751,27 +751,34 @@ function renderGame() {
     ].filter(Boolean).join(" ");
 
     return `
-      <div class="${tileClass}" style="grid-column:${col + 1};grid-row:${row + 1}">
-        <span class="tile-num">${i}</span>
-        ${i === 0 ? '<span class="tile-special">START</span>' : ""}
-        ${i === BOARD_SIZE ? '<span class="tile-special">GOAL</span>' : ""}
-        <span class="tile-icon">${space.icon}</span>
-        <small>${escapeHtml(space.label)}</small>
+      <div
+        class="${tileClass} tile-3d"
+        style="grid-column:${col + 1};grid-row:${row + 1}"
+      >
+        <div class="tile-content">
+          <span class="tile-num">${i}</span>
 
-        ${occupants.length ? `
-          <div class="pawns">
-            ${occupants.map(p => `
-              <span
-                title="${escapeHtml(p.name)}"
-                style="background:${p.color}"
-                class="${[
-                  p.id === clientId ? "my-pawn" : "",
-                  landingPlayerId === p.id ? "pawn-landed" : ""
-                ].filter(Boolean).join(" ")}"
-              >${p.avatar}</span>
-            `).join("")}
-          </div>
-        ` : ""}
+          ${i === 0 ? '<span class="tile-special">START</span>' : ""}
+          ${i === BOARD_SIZE ? '<span class="tile-special">GOAL</span>' : ""}
+
+          <span class="tile-icon">${space.icon}</span>
+          <small>${escapeHtml(space.label)}</small>
+
+          ${occupants.length ? `
+            <div class="pawns">
+              ${occupants.map(p => `
+                <span
+                  title="${escapeHtml(p.name)}"
+                  style="background:${p.color}"
+                  class="${[
+                    p.id === clientId ? "my-pawn" : "",
+                    landingPlayerId === p.id ? "pawn-landed" : ""
+                  ].filter(Boolean).join(" ")}"
+                >${p.avatar}</span>
+              `).join("")}
+            </div>
+          ` : ""}
+        </div>
       </div>
     `;
   }).join("");
@@ -1292,7 +1299,7 @@ const inviteCode = new URLSearchParams(
 
 // 正しい6桁のコードなら自動参加処理へ
 if (inviteCode && /^[A-Z0-9]{6}$/i.test(inviteCode)) {
-  const normalizedCode =finviteCode.toUpperCase();
+  const normalizedCode = inviteCode.toUpperCase();
 
   const joinInput = document.querySelector("#join-code");
 

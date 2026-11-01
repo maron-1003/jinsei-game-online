@@ -1797,3 +1797,156 @@ footer span { letter-spacing: 1px; }
   animation: none !important;
   transition: none !important;
 }
+/* =================================
+   LIFE JOURNEY - 2.5D BOARD UPGRADE
+================================= */
+
+.board-world {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 20% 20%, #c9f3c9 0%, transparent 35%),
+    radial-gradient(ellipse at 80% 75%, #a8dfb0 0%, transparent 40%),
+    linear-gradient(145deg, #d8f4d7, #8ed2a0 55%, #75bd91);
+}
+
+/* 盤面の奥行き */
+.board-grid {
+  position: relative;
+  z-index: 2;
+  perspective: 1000px;
+}
+
+/* 立体マス */
+.tile.tile-3d {
+  position: relative;
+  isolation: isolate;
+  transform: translateY(-4px);
+  border-radius: 12px;
+  box-shadow:
+    0 5px 0 rgba(38, 104, 70, 0.65),
+    0 9px 13px rgba(20, 65, 42, 0.2);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+/* マスの側面 */
+.tile.tile-3d::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 3px;
+  right: 3px;
+  bottom: -7px;
+  height: 8px;
+  border-radius: 0 0 9px 9px;
+  background: linear-gradient(
+    90deg,
+    rgba(30, 95, 62, 0.75),
+    rgba(67, 143, 91, 0.9)
+  );
+}
+
+/* マスの中身 */
+.tile-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* コマを浮かせる */
+.tile-3d .pawns {
+  position: relative;
+  z-index: 5;
+  transform: translateY(-3px);
+}
+
+.tile-3d .pawns > span {
+  position: relative;
+  border: 2px solid white;
+  box-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.2),
+    0 5px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 着地アニメーション */
+.tile-3d .pawn-landed {
+  animation: pawn-3d-land 450ms ease;
+}
+
+@keyframes pawn-3d-land {
+  0% {
+    transform: translateY(-12px) scale(1.15);
+  }
+  65% {
+    transform: translateY(2px) scale(0.95);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 盤面の自然な装飾 */
+.board-world::before {
+  content: "🌳       🏡          🌲";
+  position: absolute;
+  top: 12px;
+  left: 5%;
+  right: 5%;
+  display: flex;
+  justify-content: space-around;
+  font-size: clamp(20px, 3vw, 38px);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.board-world::after {
+  content: "🌲          🏙️          🌳";
+  position: absolute;
+  bottom: 8px;
+  left: 5%;
+  right: 5%;
+  display: flex;
+  justify-content: space-around;
+  font-size: clamp(20px, 3vw, 38px);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* スマホ */
+@media (max-width: 600px) {
+  .tile.tile-3d {
+    transform: translateY(-2px);
+    border-radius: 8px;
+    box-shadow:
+      0 3px 0 rgba(38, 104, 70, 0.65),
+      0 5px 7px rgba(20, 65, 42, 0.18);
+  }
+
+  .tile.tile-3d::after {
+    height: 5px;
+    bottom: -5px;
+  }
+
+  .tile-content {
+    min-width: 0;
+  }
+}
+
+/* 動きを減らす設定にも対応 */
+@media (prefers-reduced-motion: reduce) {
+  .tile.tile-3d,
+  .tile-3d .pawn-landed {
+    animation: none !important;
+    transition: none !important;
+  }
+}
