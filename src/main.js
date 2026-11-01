@@ -37,6 +37,7 @@ let lobbySyncBusy = false;
 let displayPositions = {};
 let animatedMoveIds = new Set();
 let landingPlayerId = null;
+let selectedLifePlayerId = null;
 
 // 表彰式の状態
 let ceremonyGameKey = null;
@@ -702,6 +703,11 @@ function renderGame() {
 
     const ceremonyStarted = Boolean(game.ceremonyStarted);
     const revealCount = Number(game.revealCount || 0);
+    const lifeTargetId = selectedLifePlayerId && game.players.some(p => p.id === selectedLifePlayerId)
+      ? selectedLifePlayerId
+      : clientId;
+    const lifeTarget = game.players.find(p => p.id === lifeTargetId) || game.players.find(p => p.id === clientId) || game.players[0];
+    selectedLifePlayerId = lifeTargetId;
     // 同じ発表段階のアニメーションは一度だけ再生
     const ceremonyAnimationKey = game.status === "finished"
       ? `${game.finishedAt ?? game.finishOrder?.join("|") ?? "finished"}-${ceremonyStarted}-${revealCount}`
@@ -873,31 +879,31 @@ function renderGame() {
         <div class="panel life-panel">
           <div class="panel-title">
             <span>🏠 LIFE STATUS</span>
-            <span>${escapeHtml(current?.name || "-")}</span>
+            <span>${escapeHtml(lifeTarget?.name || "-")}</span>
           </div>
 
           <div class="life-grid">
             <div class="life-metric">
               <span>職業</span>
-              <strong>${escapeHtml(current?.job || "未定")}</strong>
+              <strong>${escapeHtml(lifeTarget?.job || "未定")}</strong>
             </div>
             <div class="life-metric">
               <span>年収</span>
-              <strong>${yen(current?.salary || 0)}</strong>
+              <strong>${yen(lifeTarget?.salary || 0)}</strong>
             </div>
             <div class="life-metric">
               <span>家</span>
-              <strong>${escapeHtml(current?.house || "なし")}</strong>
+              <strong>${escapeHtml(lifeTarget?.house || "なし")}</strong>
             </div>
             <div class="life-metric">
               <span>車</span>
-              <strong>${escapeHtml(current?.car || "なし")}</strong>
+              <strong>${escapeHtml(lifeTarget?.car || "なし")}</strong>
             </div>
           </div>
 
           <div class="life-summary">
-            <div><span>家族</span><strong>${Number(current?.family || 0)}人</strong></div>
-            <div><span>総資産</span><strong>${yen((current?.money || 0) - (current?.debt || 0))}</strong></div>
+            <div><span>家族</span><strong>${Number(lifeTarget?.family || 0)}人</strong></div>
+            <div><span>総資産</span><strong>${yen((lifeTarget?.money || 0) - (lifeTarget?.debt || 0))}</strong></div>
           </div>
         </div>
 
@@ -908,14 +914,14 @@ function renderGame() {
           </div>
 
           ${game.players.map(p => `
-            <div class="stat-player ${p.id === current?.id ? "active-player" : ""}">
+            <button type="button" class="stat-player ${p.id === lifeTargetId ? "active-player selected-player" : ""}" data-player-id="${p.id}">
               <span class="stat-avatar" style="background:${p.color}22">${p.avatar}</span>
               <div class="stat-main">
                 <strong>${escapeHtml(p.name)}</strong>
                 <small>${escapeHtml(p.job || "冒険中")} ・ ${p.position}/${BOARD_SIZE}マス</small>
               </div>
               <b>${yen(p.money)}</b>
-            </div>
+            </button>
           `).join("")}
         </div>
 
@@ -1108,6 +1114,14 @@ function renderGame() {
     button.addEventListener("click", () => {
       const index = Number(button.dataset.choiceIndex);
       resolveEventChoice(index);
+    });
+  });
+  document.querySelectorAll(".stat-player").forEach(button => {
+    button.addEventListener("click", () => {
+      const playerId = button.dataset.playerId;
+      if (!playerId) return;
+      selectedLifePlayerId = playerId;
+      renderGame();
     });
   });
 
