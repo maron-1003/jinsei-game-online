@@ -989,12 +989,13 @@ function renderGame() {
               <div class="choice-grid">
                 <div class="choice-btn" style="pointer-events:none; opacity:0.72; background:#f5f7ff;">
                   <span class="choice-title">${escapeHtml(game.players.find(p => p.id === visibleEvent.playerId)?.name || "プレイヤー")}さんの選択待ち</span>
-                  <small>このイベントは本人だけが選択できます。</small>
+                  <small>イベントの本人が決めるまで待機中です。</small>
                 </div>
+                <button class="btn secondary full" id="event-close">待機中に戻る</button>
               </div>
             `;
           })() : `
-            <button class="btn primary full" id="event-close" ${visibleEvent.playerId === clientId ? "" : "disabled"}>閉じる</button>
+            <button class="btn primary full" id="event-close">閉じる</button>
           `}
         </div>
       </div>
@@ -1231,6 +1232,14 @@ async function dismissEvent() {
   const event = visibleEvent;
 
   if (!event || dismissedEventIds.has(event.id)) return;
+
+  // 他人のイベントはローカルのモーダルだけ閉じる。共有状態は本人の決定を待つ。
+  if (event.playerId !== clientId) {
+    dismissedEventIds.add(event.id);
+    visibleEvent = null;
+    render();
+    return;
+  }
 
   if (event.choices?.length) {
     return;
