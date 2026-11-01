@@ -968,23 +968,33 @@ function renderGame() {
             ${visibleEventDelta >= 0 ? "+" : ""}${yen(Math.abs(visibleEventDelta))}
           </strong>
 
-          ${visibleEvent.choices?.length ? `
-            <div class="choice-grid">
-              ${visibleEvent.choices.map((choice, index) => `
-                <button class="choice-btn" data-choice-index="${index}">
-                  <span class="choice-title">${escapeHtml(choice.label)}</span>
-                  <small>
-                    ${choice.job ? `<b>職業:</b> ${escapeHtml(choice.job)}${choice.salary ? ` / ${yen(choice.salary)}` : ""}` : ""}
-                    ${choice.house ? `<b>住居:</b> ${escapeHtml(choice.house)}` : ""}
-                    ${choice.car ? `<b>車:</b> ${escapeHtml(choice.car)}` : ""}
-                    ${choice.family ? `<b>家族:</b> ${Number(choice.family)}人` : ""}
-                    ${typeof choice.money === "number" && choice.money !== 0 ? `<b>変動:</b> ${choice.money >= 0 ? "+" : ""}${yen(choice.money)}` : ""}
-                  </small>
-                </button>
-              `).join("")}
-            </div>
-          ` : `
-            <button class="btn primary full" id="event-close">閉じる</button>
+          ${visibleEvent.choices?.length ? (() => {
+            const isMyEvent = visibleEvent.playerId === clientId;
+            return isMyEvent ? `
+              <div class="choice-grid">
+                ${visibleEvent.choices.map((choice, index) => `
+                  <button class="choice-btn" data-choice-index="${index}">
+                    <span class="choice-title">${escapeHtml(choice.label)}</span>
+                    <small>
+                      ${choice.job ? `<b>職業:</b> ${escapeHtml(choice.job)}${choice.salary ? ` / ${yen(choice.salary)}` : ""}` : ""}
+                      ${choice.house ? `<b>住居:</b> ${escapeHtml(choice.house)}` : ""}
+                      ${choice.car ? `<b>車:</b> ${escapeHtml(choice.car)}` : ""}
+                      ${choice.family ? `<b>家族:</b> ${Number(choice.family)}人` : ""}
+                      ${typeof choice.money === "number" && choice.money !== 0 ? `<b>変動:</b> ${choice.money >= 0 ? "+" : ""}${yen(choice.money)}` : ""}
+                    </small>
+                  </button>
+                `).join("")}
+              </div>
+            ` : `
+              <div class="choice-grid">
+                <div class="choice-btn" style="pointer-events:none; opacity:0.72; background:#f5f7ff;">
+                  <span class="choice-title">${escapeHtml(game.players.find(p => p.id === visibleEvent.playerId)?.name || "プレイヤー")}さんの選択待ち</span>
+                  <small>このイベントは本人だけが選択できます。</small>
+                </div>
+              </div>
+            `;
+          })() : `
+            <button class="btn primary full" id="event-close" ${visibleEvent.playerId === clientId ? "" : "disabled"}>閉じる</button>
           `}
         </div>
       </div>
@@ -1248,6 +1258,7 @@ async function dismissEvent() {
 async function resolveEventChoice(choiceIndex) {
   const event = visibleEvent;
   if (!event || !event.choices?.length || !Number.isInteger(choiceIndex)) return;
+  if (event.playerId !== clientId) return;
 
   const choice = event.choices[choiceIndex];
   if (!choice) return;
