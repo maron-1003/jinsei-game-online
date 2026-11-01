@@ -709,8 +709,69 @@ body {
 .event-modal h2 { font-size: 25px; margin: 10px 0; }
 .event-modal p { font-size: 13px; color: #8490a5; line-height: 1.8; }
 .event-modal > strong { display: block; font-size: 23px; margin: 18px; }
+.event-rarity {
+  display: inline-block;
+  margin: 8px 0 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  background: #eef2ff;
+  color: #5a6fe5;
+}
+.event-rarity.legendary,
+.event-rarity.ultra-rare {
+  background: linear-gradient(135deg, #fff3bf, #ffd166);
+  color: #8a5a08;
+}
+.event-rarity.rare {
+  background: linear-gradient(135deg, #efe7ff, #d9c7ff);
+  color: #6d47b3;
+}
+.choice-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+.choice-btn {
+  width: 100%;
+  border: 1px solid #e4e9f8;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #f8f9ff, #ffffff);
+  padding: 12px 14px;
+  text-align: left;
+  color: #273252;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.choice-btn:hover {
+  transform: translateY(-2px);
+  border-color: #cdd8ff;
+  box-shadow: 0 8px 18px rgba(86, 104, 204, 0.12);
+}
+.choice-btn span {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+}
+.choice-btn small {
+  display: block;
+  margin-top: 5px;
+  color: #75819a;
+  font-size: 10px;
+  line-height: 1.5;
+}
 .positive { color: #1bb58a; }
 .negative { color: #ef7777; }
+.event-modal.event-legendary {
+  border: 3px solid #ffd95f;
+  box-shadow: 0 0 25px rgba(255, 210, 84, 0.5), 0 18px 50px rgba(30, 40, 80, 0.25);
+}
+.event-modal.event-ultra {
+  border: 3px solid #ff9b88;
+  box-shadow: 0 0 30px rgba(255, 112, 88, 0.55), 0 18px 60px rgba(35, 25, 60, 0.25);
+}
 
 /* FOOTER */
 footer {
@@ -725,7 +786,7 @@ footer {
 footer span { letter-spacing: 1px; }
 
 /* TABLET */
-@media (max-width: 1000px) {
+@media (max-width: 600px) {
   .game-layout { grid-template-columns: 1fr; }
   .game-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dice-panel { grid-row: span 2; }
@@ -1995,17 +2056,11 @@ footer span { letter-spacing: 1px; }
   pointer-events: none;
 }
 
-/* 8列の盤面 */
 .board-grid {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(8, minmax(76px, 1fr));
-  grid-template-rows: repeat(8, minmax(100px, auto));
-  gap: 16px;
-  min-width: 700px;
-  padding: 20px 8px 30px;
-  perspective: 1000px;
+  grid-template-columns: repeat(10, minmax(70px, 1fr));
+  grid-template-rows: repeat(7, minmax(88px, auto));
+  gap: 12px;
+  min-width: auto;
 }
 
 /* 立体マス */
@@ -2179,5 +2234,78 @@ footer span { letter-spacing: 1px; }
 
   .tile-content {
     min-height: 90px;
+  }
+}
+/* =========================
+   iPad (768～1100px)
+========================= */
+@media (min-width: 768px) and (max-width: 1100px){
+
+  .shell{
+    padding:0 16px;
+  }
+
+  .game-layout{
+    grid-template-columns:minmax(0,1fr) 250px;
+    gap:16px;
+    align-items:start;
+  }
+
+  .board-panel{
+    padding:16px;
+  }
+
+  .board-world{
+    padding:18px;
+  }
+
+  .board-grid{
+    grid-template-columns:repeat(10,1fr);
+    grid-template-rows:repeat(7,72px);
+    gap:8px;
+    min-width:0;
+  }
+
+  .tile{
+    min-height:72px;
+  }
+
+  .tile-icon{
+    font-size:18px;
+  }
+
+  .tile small{
+    font-size:7px;
+  }
+
+  .pawns span{
+    width:16px;
+    height:16px;
+    font-size:8px;
+  }
+
+  .game-sidebar .panel{
+    padding:14px;
+  }
+
+  .dice-cube-wrapper{
+    width:90px;
+    height:90px;
+  }
+
+  .dice-cube{
+    width:70px;
+    height:70px;
+  }
+
+  .dice-cube-face{
+    width:70px;
+    height:70px;
+    padding:8px;
+  }
+
+  .dice-cube-face span{
+    width:9px;
+    height:9px;
   }
 }

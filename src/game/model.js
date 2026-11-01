@@ -1,5 +1,5 @@
 
-import { BOARD_SIZE } from "../data/board.js";
+import { BOARD_SIZE, getSpace } from "../data/board.js";
 import { randomEvent } from "../data/events.js";
 
 export const AVATARS = ["🧑", "👩", "🧔", "👨‍💻", "👩‍🎨", "🧑‍🚀"];
@@ -12,6 +12,14 @@ export const COLORS = [
   "#f4bd4f",
   "#55b9e8"
 ];
+
+export function calculateSalary(player) {
+  const base = Number(player.salary || 300000);
+  const familyBonus = (player.family || 0) * 150000;
+  const houseBonus = player.house && player.house !== "なし" ? 200000 : 0;
+  const carBonus = player.car && player.car !== "なし" ? 100000 : 0;
+  return base + familyBonus + houseBonus + carBonus;
+}
 
 export function newPlayer(id, name, avatar = "🧑", color = COLORS[0]) {
   return {
@@ -33,9 +41,7 @@ export function newPlayer(id, name, avatar = "🧑", color = COLORS[0]) {
   };
 }
 
-
 export function createInitialGame(players) {
-  // プレイヤーの順番をランダムにシャッフル
   const shuffledPlayers = [...players];
 
   for (let i = shuffledPlayers.length - 1; i > 0; i--) {
@@ -49,8 +55,6 @@ export function createInitialGame(players) {
     status: "playing",
     turnIndex: 0,
     turnNumber: 1,
-
-    // ランダムに決まった順番を保存
     players: shuffledPlayers.map(p => ({
       ...p,
       position: 0,
@@ -64,7 +68,6 @@ export function createInitialGame(players) {
       finished: false,
       finishRank: null
     })),
-
     finishOrder: [],
     finishedAt: null,
     lastRoll: null,
@@ -73,18 +76,14 @@ export function createInitialGame(players) {
   };
 }
 
-
-// プレイヤーの純資産を計算
 export function netWorth(player) {
   return (player.money || 0) - (player.debt || 0);
 }
 
-// ゴールしたプレイヤーを記録
 function registerFinish(game, player) {
   if (player.finished) return;
 
   game.finishOrder ??= [];
-
   player.finished = true;
 
   if (!game.finishOrder.includes(player.id)) {
@@ -94,7 +93,22 @@ function registerFinish(game, player) {
   player.finishRank = game.finishOrder.length;
 }
 
-// サイコロを振ってターンを進める
+export function applyChoiceEffect(player, choice = {}) {
+  if (!player || !choice) return player;
+
+  if (choice.job) player.job = choice.job;
+  if (typeof choice.salary === "number") player.salary = choice.salary;
+  if (typeof choice.money === "number") player.money += choice.money;
+  if (typeof choice.debt === "number") player.debt += choice.debt;
+  if (choice.house) player.house = choice.house;
+  if (choice.car) player.car = choice.car;
+  if (typeof choice.family === "number") {
+    player.family = Math.max(0, (player.family || 0) + choice.family);
+  }
+
+  return player;
+}
+
 export function takeTurn(game, playerId) {
   if (game.status !== "playing" || game.pendingEvent) return game;
 
@@ -106,16 +120,13 @@ export function takeTurn(game, playerId) {
 
   const roll = Math.floor(Math.random() * 6) + 1;
   const next = structuredClone(game);
-
   next.finishOrder ??= [];
 
   const player = next.players[next.turnIndex];
   const oldPosition = player.position;
-
   player.position = Math.min(BOARD_SIZE, oldPosition + roll);
   next.lastRoll = roll;
 
-  // コマ移動アニメーション用の情報
   next.moveAnimation = {
     id: crypto.randomUUID(),
     playerId: player.id,
@@ -127,44 +138,47 @@ export function takeTurn(game, playerId) {
 
   let message = `${player.name} は ${roll} マス進んだ！`;
 
-  // ゴール判定
   if (player.position >= BOARD_SIZE) {
     registerFinish(next, player);
     message += ` 🏁 ${player.name} が${player.finishRank}位でゴール！`;
   } else {
-    const space = player.position % 12;
+    const space = getSpace(player.position);
 
-    if (space === 1 || space === 5) {
-      player.money += player.salary;
-      message += ` 給料 ${yen(player.salary)} を獲得！`;
-
-    } else if (space === 3) {
-      player.money -= 500000;
-      message += " 買い物で50万円使った。";
-
-    } else if (space === 6) {
-      const gain = Math.random() > 0.5 ? 1000000 : -500000;
+    if (space.type === "salary") {
+      const income = calculateSalary(player);
+      player.money += income;
+      message += ` 給料 ${yen(income)} を獲得！`;
+    } else if (space.type === "shopping") {
+      const costs = [500000, 900000, 1500000, 2200000];
+      const spend = costs[Math.floor(Math.random() * costs.length)];
+      player.money -= spend;
+      message += ` 🛍️ ${yen(spend)} を使って生活を整えた。`;
+    } else if (space.type === "investment") {
+      const gain = Math.random() > 0.5 ? 1200000 : -700000;
       player.money += gain;
-      message += ` 投資結果：${gain >= 0 ? "+" : ""}${yen(gain)}。`;
-
-    } else if (
-      space === 2 ||
-      space === 4 ||
-      space === 7 ||
-      space === 11
-    ) {
+      message += ` 📈 投資結果：${gain >= 0 ? "+" : ""}${yen(gain)}。`;
+    } else if (space.type === "rest") {
+      const recharge = 200000;
+      player.money += recharge;
+      message += ` 🌴 休息で心を整え、${yen(recharge)}を節約できた。`;
+    } else if (space.type === "event") {
       const event = randomEvent();
-
-      player.money += event.money;
-
-      next.pendingEvent = {
-        ...event,
-        playerId: player.id,
-        id: crypto.randomUUID()
-      };
-
+      if (event.choices?.length) {
+        next.pendingEvent = {
+          ...event,
+          playerId: player.id,
+          id: crypto.randomUUID(),
+          choiceMode: true
+        };
+      } else {
+        player.money += event.money;
+        next.pendingEvent = {
+          ...event,
+          playerId: player.id,
+          id: crypto.randomUUID()
+        };
+      }
       message += ` ${event.title}`;
-
     } else {
       message += " ひと休み。";
     }
@@ -179,11 +193,9 @@ export function takeTurn(game, playerId) {
   return next;
 }
 
-// 次のプレイヤーへターンを移す
 export function advanceTurn(game) {
   const active = game.players.filter(p => !p.finished);
 
-  // 全員ゴールした場合
   if (active.length === 0) {
     game.status = "finished";
     game.finishedAt = Date.now();
@@ -201,7 +213,6 @@ export function advanceTurn(game) {
     }
   }
 
-  // 1周したらターン数を増やす
   if (index <= game.turnIndex) {
     game.turnNumber += 1;
   }
@@ -209,7 +220,6 @@ export function advanceTurn(game) {
   game.turnIndex = index;
 }
 
-// イベントを閉じる
 export function closeEvent(game) {
   const next = structuredClone(game);
 
@@ -219,7 +229,6 @@ export function closeEvent(game) {
   return next;
 }
 
-// 金額表示
 export function yen(value) {
   return new Intl.NumberFormat("ja-JP", {
     style: "currency",
@@ -228,7 +237,6 @@ export function yen(value) {
   }).format(value);
 }
 
-// 最終ランキング
 export function ranking(players) {
   return [...players].sort((a, b) => {
     const difference = netWorth(b) - netWorth(a);
@@ -237,7 +245,6 @@ export function ranking(players) {
       return difference;
     }
 
-    // 同額なら先にゴールした人を優先
     const rankA = a.finishRank ?? Infinity;
     const rankB = b.finishRank ?? Infinity;
 

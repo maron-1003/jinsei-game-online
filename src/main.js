@@ -9,7 +9,8 @@ import {
   takeTurn,
   closeEvent,
   yen,
-  ranking
+  ranking,
+  applyChoiceEffect
 } from "./game/model.js";
 import { getSpace, BOARD_SIZE } from "./data/board.js";
 
@@ -726,6 +727,7 @@ function renderGame() {
 
     // イベントIDごとにアニメーションを一度だけ再生
     const eventId = visibleEvent?.id;
+    const visibleEventDelta = Number(visibleEvent?.money ?? 0);
     const animateEvent = Boolean(eventId && !animatedEventIds.has(eventId));
 
     if (animateEvent) {
@@ -908,12 +910,15 @@ function renderGame() {
             : visibleEvent.kind === "bad"
               ? "event-bad"
               : "event-neutral"
-        } ${animateEvent ? "" : "event-no-animation"}">
+        } ${visibleEvent.rarity === "legendary" ? "event-legendary" : ""} ${visibleEvent.rarity === "ultra-rare" ? "event-ultra" : ""} ${animateEvent ? "" : "event-no-animation"}">
           <div class="event-emoji">
             ${visibleEvent.kind === "good" ? "🎉" : visibleEvent.kind === "bad" ? "💸" : "🌴"}
           </div>
 
           <span class="eyebrow">LIFE EVENT</span>
+          <div class="event-rarity ${visibleEvent.rarity || "normal"}">
+            ${visibleEvent.rarity === "ultra-rare" ? "超レア" : visibleEvent.rarity === "legendary" ? "レア" : visibleEvent.rarity === "rare" ? "レア" : "通常"}
+          </div>
 
           <h2>
             ${escapeHtml(game.players.find(p => p.id === visibleEvent.playerId)?.name || "プレイヤー")}さんにイベント発生！
@@ -922,11 +927,27 @@ function renderGame() {
           <h3>${escapeHtml(visibleEvent.title)}</h3>
           <p>${escapeHtml(visibleEvent.description)}</p>
 
-          <strong class="${visibleEvent.money >= 0 ? "positive" : "negative"}">
-            ${visibleEvent.money >= 0 ? "+" : ""}${yen(visibleEvent.money)}
+          <strong class="${visibleEventDelta >= 0 ? "positive" : "negative"}">
+            ${visibleEventDelta >= 0 ? "+" : ""}${yen(Math.abs(visibleEventDelta))}
           </strong>
 
-          <button class="btn primary full" id="event-close">閉じる</button>
+          ${visibleEvent.choices?.length ? `
+            <div class="choice-grid">
+              ${visibleEvent.choices.map((choice, index) => `
+                <button class="choice-btn" data-choice-index="${index}">
+                  <span>${escapeHtml(choice.label)}</span>
+                  <small>
+                    ${choice.job ? `職業: ${escapeHtml(choice.job)}` : ""}
+                    ${choice.house ? `住居: ${escapeHtml(choice.house)}` : ""}
+                    ${choice.car ? `車: ${escapeHtml(choice.car)}` : ""}
+                    ${typeof choice.money === "number" && choice.money !== 0 ? `${choice.money >= 0 ? "+" : ""}${yen(choice.money)}` : ""}
+                  </small>
+                </button>
+              `).join("")}
+            </div>
+          ` : `
+            <button class="btn primary full" id="event-close">閉じる</button>
+          `}
         </div>
       </div>
     ` : ""}
@@ -1051,6 +1072,12 @@ function renderGame() {
 
   document.querySelector("#roll-btn")?.addEventListener("click", rollDice);
   document.querySelector("#event-close")?.addEventListener("click", dismissEvent);
+  document.querySelectorAll(".choice-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.choiceIndex);
+      resolveEventChoice(index);
+    });
+  });
 
   document.querySelector("#reveal-next")?.addEventListener("click", () => {
     advanceCeremony();
@@ -1149,6 +1176,10 @@ async function dismissEvent() {
 
   if (!event || dismissedEventIds.has(event.id)) return;
 
+  if (event.choices?.length) {
+    return;
+  }
+
   dismissedEventIds.add(event.id);
   render();
 
@@ -1166,6 +1197,28 @@ async function dismissEvent() {
       busy = false;
     }
   }
+}
+
+async function resolveEventChoice(choiceIndex) {
+  const event = visibleEvent;
+  if (!event || !event.choices?.length || !Number.isInteger(choiceIndex)) return;
+
+  const choice = event.choices[choiceIndex];
+  if (!choice) return;
+
+  const next = structuredClone(game);
+  const player = next.players.find(p => p.id === event.playerId);
+  if (!player) return;
+
+  applyChoiceEffect(player, choice);
+
+  next.lastMessage = `${player.name} は「${choice.label}」を選び、人生の方向を決めた。`;
+  next.pendingEvent = null;
+  dismissedEventIds.add(event.id);
+  visibleEvent = null;
+  advanceTurn(next);
+
+  await saveGame(next);
 }
 
 // 表彰式の状態を全員で同期する
