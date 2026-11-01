@@ -19,7 +19,8 @@ body {
 }
 
 .shell {
-  max-width: 1400px;
+  width: min(100%, 1500px);
+  max-width: 1500px;
   margin: auto;
   padding: 0 28px;
 }
@@ -412,15 +413,16 @@ body {
 /* BOARD */
 .game-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 20px;
-  margin-bottom: 55px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 310px);
+  gap: 18px;
+  width: 100%;
+  margin: 0 auto 55px;
   align-items: start;
   max-width: 1360px;
-  margin-inline: auto;
 }
 
 .board-panel {
+  width: 100%;
   background: linear-gradient(145deg, #e8edff, #e6f5f1);
   border: 1px solid #dce4f5;
   border-radius: 25px;
@@ -565,9 +567,11 @@ body {
   display: grid;
   align-content: start;
   gap: 14px;
+  width: 100%;
 }
 
 .game-sidebar .panel {
+  width: 100%;
   border-radius: 20px;
   padding: 20px;
   box-shadow: 0 8px 25px #23345a0b;
@@ -620,6 +624,13 @@ body {
 .life-panel {
   background: linear-gradient(145deg, #fff, #f5f7ff);
   border: 1px solid #e2e7ff;
+  overflow: hidden;
+}
+
+.life-panel .panel-title {
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #edf1ff;
 }
 
 .life-grid {
