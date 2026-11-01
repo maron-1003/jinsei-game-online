@@ -739,8 +739,14 @@ function renderGame() {
       (displayPositions[p.id] ?? p.position) === i
     );
 
-    const row = Math.floor(i / 10);
-    const col = row % 2 === 0 ? i % 10 : 9 - (i % 10);
+    // 8列×8行の蛇行ルート
+    const columns = 8;
+    const row = Math.floor(i / columns);
+    const indexInRow = i % columns;
+
+    const col = row % 2 === 0
+      ? indexInRow
+      : columns - 1 - indexInRow;
 
     const tileClass = [
       "tile",

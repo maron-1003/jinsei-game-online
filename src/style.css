@@ -1950,3 +1950,234 @@ footer span { letter-spacing: 1px; }
     transition: none !important;
   }
 }
+
+/* =====================================
+   LIFE JOURNEY - 2.5D BOARD UPGRADE
+   ===================================== */
+
+/* 島の背景 */
+.board-world {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 32px;
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 20% 20%, #a8e6a0 0%, transparent 35%),
+    radial-gradient(ellipse at 80% 75%, #76cf91 0%, transparent 40%),
+    linear-gradient(145deg, #8bdc9b, #55b985 55%, #379b75);
+  box-shadow:
+    inset 0 4px 12px rgba(255,255,255,.35),
+    inset 0 -12px 25px rgba(20,100,65,.2);
+}
+
+/* 島の地面の装飾 */
+.board-world::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  z-index: 0;
+  pointer-events: none;
+  border: 2px dashed rgba(255,255,255,.22);
+  border-radius: 24px;
+}
+
+.board-world::after {
+  content: "🌳      ☁️                    🌲       ☀️";
+  position: absolute;
+  top: 12px;
+  left: 20px;
+  z-index: 0;
+  width: calc(100% - 40px);
+  font-size: 25px;
+  letter-spacing: 20px;
+  opacity: .8;
+  pointer-events: none;
+}
+
+/* 8列の盤面 */
+.board-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(76px, 1fr));
+  grid-template-rows: repeat(8, minmax(100px, auto));
+  gap: 16px;
+  min-width: 700px;
+  padding: 20px 8px 30px;
+  perspective: 1000px;
+}
+
+/* 立体マス */
+.tile.tile-3d {
+  position: relative;
+  isolation: isolate;
+  min-height: 100px;
+  overflow: visible;
+  transform: translateY(-5px);
+  border-radius: 14px;
+  border: 2px solid rgba(255,255,255,.8);
+  background: linear-gradient(
+    145deg,
+    #ffffff,
+    #e9f5e9
+  );
+  box-shadow:
+    0 5px 0 #b5cdb8,
+    0 9px 0 #86a98d,
+    0 13px 18px rgba(20,70,40,.25);
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+/* マスの側面 */
+.tile.tile-3d::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 5px;
+  right: -5px;
+  bottom: -13px;
+  height: 13px;
+  border-radius: 0 0 8px 8px;
+  background: #719b78;
+  transform: skewX(-25deg);
+}
+
+/* マスの中身 */
+.tile-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 100px;
+  padding: 8px 4px;
+}
+
+/* マスの種類ごとの色 */
+.tile-3d.salary {
+  background: linear-gradient(145deg, #fff6c7, #ffe28a);
+  box-shadow:
+    0 5px 0 #d9b75b,
+    0 9px 0 #b08c3f,
+    0 13px 18px rgba(80,60,10,.2);
+}
+
+.tile-3d.event {
+  background: linear-gradient(145deg, #f1dcff, #d9b7ff);
+  box-shadow:
+    0 5px 0 #b99bd8,
+    0 9px 0 #9573b8,
+    0 13px 18px rgba(60,30,90,.2);
+}
+
+.tile-3d.shopping {
+  background: linear-gradient(145deg, #ffe2ed, #ffb9d2);
+  box-shadow:
+    0 5px 0 #d99ab3,
+    0 9px 0 #b87591,
+    0 13px 18px rgba(90,30,50,.2);
+}
+
+.tile-3d.investment {
+  background: linear-gradient(145deg, #d8f5ff, #a4e4f5);
+  box-shadow:
+    0 5px 0 #83bdcf,
+    0 9px 0 #6197a8,
+    0 13px 18px rgba(20,60,80,.2);
+}
+
+.tile-3d.rest {
+  background: linear-gradient(145deg, #e2f7d9, #bce8a9);
+  box-shadow:
+    0 5px 0 #9bc68c,
+    0 9px 0 #79a66c,
+    0 13px 18px rgba(30,70,20,.2);
+}
+
+/* STARTとGOALを目立たせる */
+.tile-3d.start {
+  background: linear-gradient(145deg, #fff4b0, #ffc94f);
+}
+
+.tile-3d.goal {
+  background: linear-gradient(145deg, #fff0a8, #ffad45);
+  border: 3px solid #fff3c4;
+  box-shadow:
+    0 5px 0 #d58b32,
+    0 9px 0 #a96525,
+    0 13px 20px rgba(100,50,10,.3);
+}
+
+/* プレイヤーのコマ */
+.tile-3d .pawns {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 5px;
+}
+
+/* コマに立体感 */
+.tile-3d .pawn {
+  filter: drop-shadow(0 3px 2px rgba(0,0,0,.3));
+  transform: translateY(-2px);
+}
+
+/* 飾り */
+.world-decoration {
+  z-index: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 3px rgba(0,0,0,.15));
+}
+
+/* PC・タブレット */
+@media (min-width: 769px) {
+  .board-world {
+    padding: 30px;
+  }
+
+  .board-grid {
+    gap: 18px;
+  }
+
+  .tile.tile-3d:hover {
+    transform: translateY(-9px);
+    box-shadow:
+      0 7px 0 #b5cdb8,
+      0 12px 0 #86a98d,
+      0 17px 22px rgba(20,70,40,.28);
+  }
+}
+
+/* スマホ */
+@media (max-width: 768px) {
+  .board-world {
+    padding: 12px;
+    border-radius: 18px;
+    overflow-x: auto;
+  }
+
+  .board-grid {
+    min-width: 700px;
+    gap: 12px;
+    grid-template-columns: repeat(8, minmax(70px, 1fr));
+    grid-template-rows: repeat(8, minmax(90px, auto));
+    padding: 18px 5px 25px;
+  }
+
+  .tile.tile-3d {
+    min-height: 90px;
+  }
+
+  .tile-content {
+    min-height: 90px;
+  }
+}
