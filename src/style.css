@@ -1789,3 +1789,11 @@ footer span { letter-spacing: 1px; }
     transform: rotate(15deg);
   }
 }
+/* 表彰式のアニメーションを一度再生した後は停止 */
+.ceremony-modal.ceremony-no-animation,
+.ceremony-modal.ceremony-no-animation *,
+.ceremony-modal.ceremony-no-animation::before,
+.ceremony-modal.ceremony-no-animation::after {
+  animation: none !important;
+  transition: none !important;
+}

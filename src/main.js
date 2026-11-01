@@ -40,6 +40,8 @@ let landingPlayerId = null;
 // 表彰式の状態
 let ceremonyGameKey = null;
 let ceremonyTimer = null;
+// 表彰式の各段階のアニメーション再生記録
+let animatedCeremonyStates = new Set();
 
 function syncPendingEvent() {
   const event = game?.pendingEvent;
@@ -622,6 +624,8 @@ async function startGame() {
   visibleEvent = null;
   dismissedEventIds.clear();
   seenEventIds.clear();
+  animatedCeremonyStates.clear();
+  ceremonyGameKey = null;
   animatedMoveIds.clear();
   displayPositions = {};
   landingPlayerId = null;
@@ -695,23 +699,41 @@ function renderGame() {
     }
   }
 
-const ceremonyStarted = Boolean(game.ceremonyStarted);
-const revealCount = Number(game.revealCount || 0);
+    const ceremonyStarted = Boolean(game.ceremonyStarted);
+    const revealCount = Number(game.revealCount || 0);
+    // 同じ発表段階のアニメーションは一度だけ再生
+    const ceremonyAnimationKey = game.status === "finished"
+      ? `${game.finishedAt ?? game.finishOrder?.join("|") ?? "finished"}-${ceremonyStarted}-${revealCount}`
+      : null;
 
-  const current = game.players[game.turnIndex];
-  const mineTurn = current?.id === clientId;
-  const ranked = ranking(game.players);
+    const animateCeremony = Boolean(
+      ceremonyAnimationKey &&
+      !animatedCeremonyStates.has(ceremonyAnimationKey)
+    );
 
-  // イベントIDごとにアニメーションを一度だけ再生
-  const eventId = visibleEvent?.id;
-  const animateEvent = Boolean(eventId && !animatedEventIds.has(eventId));
+    if (animateCeremony) {
+      animatedCeremonyStates.add(ceremonyAnimationKey);
+    }
 
-  if (animateEvent) {
-    animatedEventIds.add(eventId);
-  }
+    const ceremonyAnimationClass = animateCeremony
+      ? ""
+      : "ceremony-no-animation";
 
-  // 10列のジグザグ型ボード配置
-  const tiles = Array.from({ length: BOARD_SIZE + 1 }, (_, i) => {
+    // サイコロのアニメーション
+    const current = game.players[game.turnIndex];
+    const mineTurn = current?.id === clientId;
+    const ranked = ranking(game.players);
+
+    // イベントIDごとにアニメーションを一度だけ再生
+    const eventId = visibleEvent?.id;
+    const animateEvent = Boolean(eventId && !animatedEventIds.has(eventId));
+
+    if (animateEvent) {
+      animatedEventIds.add(eventId);
+    }
+
+    // 10列のジグザグ型ボード配置
+    const tiles = Array.from({ length: BOARD_SIZE + 1 }, (_, i) => {
     const space = getSpace(i);
     const occupants = game.players.filter(p =>
       (displayPositions[p.id] ?? p.position) === i
@@ -899,7 +921,7 @@ const revealCount = Number(game.revealCount || 0);
     ${game.status === "finished" ? `
       ${!ceremonyStarted ? `
         <div class="modal-backdrop ceremony-backdrop">
-          <div class="ceremony-modal ceremony-ready">
+          <div class="ceremony-modal ceremony-ready ${ceremonyAnimationClass}">
 
             <div class="champion-trophy">🏁</div>
 
@@ -930,8 +952,7 @@ const revealCount = Number(game.revealCount || 0);
         </div>
       ` : `
         <div class="modal-backdrop ceremony-backdrop">
-          <div class="ceremony-modal">
-
+          <div class="ceremony-modal ${ceremonyAnimationClass}">
             <span class="eyebrow">LIFE JOURNEY AWARDS</span>
 
             <h2 class="ceremony-title">
